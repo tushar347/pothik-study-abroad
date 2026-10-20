@@ -1,0 +1,47 @@
+{
+  "brand": {
+    "name": "Pothik",
+    "bangla": "পথিক",
+    "tagline": "Your path to a brighter tomorrow",
+    "logo": "/assets/brand/pothik-logo.png",
+    "theme": {
+      "burgundy": "#70263D",
+      "deepBurgundy": "#4B1728",
+      "cream": "#F7F2E9",
+      "ivory": "#FFFDF9",
+      "dustyRose": "#E8CDD2",
+      "blush": "#F3E3E5",
+      "sage": "#DCE6DA",
+      "lavender": "#E8E2F0",
+      "champagne": "#D8BD91",
+      "ink": "#30272A"
+    }
+  },
+  "hero": {
+    "eyebrow": "A clearer route to your next chapter",
+    "headline": "Your future has a destination.",
+    "description": "Explore study-abroad options, prepare for IELTS, and build a practical plan with guidance grounded in sources you can check.",
+    "image": "/assets/countries/germany.webp",
+    "imageAlt": "Student near Berlin's Brandenburg Gate at golden hour with German flag accents",
+    "primaryCta": "Build my roadmap",
+    "secondaryCta": "Explore destinations"
+  },
+  "countries": [
+    {"slug":"germany","name":"Germany","flag":"🇩🇪","image":"/assets/countries/germany.webp","imageAlt":"Student in Berlin near Brandenburg Gate with German flag accents","summary":"Research, engineering and graduate study options across a diverse university landscape.","tuition":"Varies by state, institution and programme","living":"Plan for housing, insurance, food, transport and official proof-of-funds requirements.","language":"German and English programmes","officialUrl":"https://www.study-in-germany.com/en/","accent":"#E8CDD2"},
+    {"slug":"canada","name":"Canada","flag":"🇨🇦","image":"/assets/countries/canada.webp","imageAlt":"International student at Toronto waterfront with Canadian flag accents","summary":"Explore graduate programmes, research pathways and institution-specific funding.","tuition":"Varies by institution and programme","living":"Budget for housing, transport, insurance and current study-permit requirements.","language":"English and French programmes","officialUrl":"https://www.educanada.ca/index.aspx?lang=eng","accent":"#F3E3E5"},
+    {"slug":"usa","name":"United States","flag":"🇺🇸","image":"/assets/countries/usa.webp","imageAlt":"Student near a university campus and New York skyline with US flag accents","summary":"Compare a broad range of universities, research groups and graduate funding routes.","tuition":"Varies widely by university and department","living":"Include housing, insurance, travel and visa-related costs in your budget.","language":"Primarily English","officialUrl":"https://educationusa.state.gov/","accent":"#E8E2F0"},
+    {"slug":"uk","name":"United Kingdom","flag":"🇬🇧","image":"/assets/countries/uk.webp","imageAlt":"Student near Westminster and Big Ben with UK flag accents","summary":"Explore taught master's degrees, research opportunities and scholarship routes.","tuition":"Varies by course and institution","living":"Plan for accommodation, daily costs, travel and current visa requirements.","language":"Primarily English","officialUrl":"https://study-uk.britishcouncil.org/","accent":"#DCE6DA"},
+    {"slug":"australia","name":"Australia","flag":"🇦🇺","image":"/assets/countries/australia.webp","imageAlt":"Student overlooking Sydney Harbour Bridge and Opera House with Australian flag accents","summary":"Compare coursework and research programmes across major university cities.","tuition":"Varies by provider and course","living":"Include accommodation, insurance, travel and current visa-related costs.","language":"Primarily English","officialUrl":"https://www.studyaustralia.gov.au/","accent":"#F3E3E5"}
+  ],
+  "ielts": [
+    {"slug":"reading","name":"Reading","label":"Read with strategy","description":"Build scanning, skimming, inference and evidence-based answer skills.","image":"/assets/ielts/reading.webp","imageAlt":"Student reading and studying in a warm library","accent":"#E8E2F0"},
+    {"slug":"writing","name":"Writing","label":"Write with clarity","description":"Practise essay planning, task response, coherence, vocabulary and grammar.","image":"/assets/ielts/writing.webp","imageAlt":"Student working on writing practice beside a laptop","accent":"#F3E3E5"},
+    {"slug":"listening","name":"Listening","label":"Listen for meaning","description":"Practise anticipating answers, following details and reviewing mistakes.","image":"/assets/ielts/listening.webp","imageAlt":"Student wearing headphones while practising listening","accent":"#DCE6DA"},
+    {"slug":"speaking","name":"Speaking","label":"Speak with confidence","description":"Work on fluency, coherence, vocabulary and structured speaking practice.","image":"/assets/ielts/speaking.webp","imageAlt":"Student practising speaking in a library setting","accent":"#E8CDD2"}
+  ],
+  "assistant": {
+    "name": "Pothik counsellor",
+    "greeting": "Planning to study abroad or prepare for IELTS? Ask me a question. I’ll look for relevant guidance and show the sources I use.",
+    "prompts": ["How do I start a Master's application?", "Help me plan IELTS practice", "What should I verify before paying an agency?"]
+  }
+}

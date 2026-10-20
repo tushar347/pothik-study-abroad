@@ -1,0 +1,13 @@
+node_modules/
+.env
+.env.*
+!.env.example
+data/*.sqlite
+data/*.db
+data/*.wasm
+data/*.bak
+data/*.sqlite-*
+public/uploads/*
+!public/uploads/.gitkeep
+npm-debug.log*
+*.log

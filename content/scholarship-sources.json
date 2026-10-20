@@ -1,0 +1,101 @@
+[
+  {
+    "country_slug": "germany",
+    "country_name": "Germany",
+    "provider": "DAAD",
+    "name": "DAAD Scholarship Database",
+    "url": "https://www2.daad.de/deutschland/stipendium/datenbank/en/21148-scholarship-database/",
+    "kind": "official-index",
+    "description": "Search scholarships for international students and researchers. Filter by country of application, degree stage, subject and purpose."
+  },
+  {
+    "country_slug": "canada",
+    "country_name": "Canada",
+    "provider": "EduCanada / Global Affairs Canada",
+    "name": "Scholarships for international applicants",
+    "url": "https://www.educanada.ca/scholarships-bourses/non_can/index.aspx?lang=eng",
+    "kind": "official-index",
+    "description": "Official overview of Canadian government international scholarship and exchange opportunities."
+  },
+  {
+    "country_slug": "canada",
+    "country_name": "Canada",
+    "provider": "EduCanada / Global Affairs Canada",
+    "name": "Search for scholarships",
+    "url": "https://www.educanada.ca/scholarships-bourses/searchAll-rechercheTous.aspx?lang=eng",
+    "kind": "official-index",
+    "description": "Official searchable scholarship database; some entries require institutional nomination or have citizenship restrictions."
+  },
+  {
+    "country_slug": "usa",
+    "country_name": "United States",
+    "provider": "EducationUSA",
+    "name": "Financial aid and scholarship search",
+    "url": "https://educationusa.state.gov/find-financial-aid",
+    "kind": "official-index",
+    "description": "Search financial aid and scholarship listings for study in the United States. Verify each institution's current cycle and international eligibility."
+  },
+  {
+    "country_slug": "usa",
+    "country_name": "United States",
+    "provider": "Fulbright Foreign Student Program",
+    "name": "Country-specific Fulbright opportunities",
+    "url": "https://foreign.fulbrightonline.org/",
+    "kind": "official-index",
+    "description": "Foreign Student Program opportunities are managed by country; check the Bangladesh-specific call and current deadlines."
+  },
+  {
+    "country_slug": "uk",
+    "country_name": "United Kingdom",
+    "provider": "British Council Study UK",
+    "name": "GREAT Scholarships \u2014 Bangladesh",
+    "url": "https://study-uk.britishcouncil.org/scholarships-funding/great-scholarships/bangladesh",
+    "kind": "official-index",
+    "description": "Country-specific list of GREAT Scholarships. Deadlines and participating universities vary by institution and academic year."
+  },
+  {
+    "country_slug": "uk",
+    "country_name": "United Kingdom",
+    "provider": "Chevening",
+    "name": "Chevening application timeline",
+    "url": "https://www.chevening.org/scholarships/application-timeline/",
+    "kind": "official-index",
+    "description": "Official application timeline. The 2027\u201328 application window opened in August 2026 and closed in October 2026; monitor for the next cycle."
+  },
+  {
+    "country_slug": "uk",
+    "country_name": "United Kingdom",
+    "provider": "Bangladesh University Grants Commission",
+    "name": "Commonwealth Scholarships notices",
+    "url": "https://ugc.gov.bd/service-details/commonwealth-scholarship",
+    "kind": "official-index",
+    "description": "Bangladesh UGC notices and forms for Commonwealth Scholarships. Check the latest notice and attached official documents for deadlines."
+  },
+  {
+    "country_slug": "australia",
+    "country_name": "Australia",
+    "provider": "Australian Government DFAT",
+    "name": "Australia Awards \u2014 Bangladesh intake",
+    "url": "https://www.dfat.gov.au/people-to-people/australia-awards/participating-countries/bangladesh-information-for-intake",
+    "kind": "official-index",
+    "description": "Official Bangladesh country information. The 2027 intake application window closed on 30 April 2026; monitor for the next announced intake."
+  },
+  {
+    "country_slug": "australia",
+    "country_name": "Australia",
+    "provider": "Study Australia",
+    "name": "Scholarships and study funding",
+    "url": "https://www.studyaustralia.gov.au/",
+    "kind": "official-index",
+    "description": "Official Australian study portal with institution and programme information; check university scholarship pages for current international-student rounds."
+  },
+  {
+    "country_slug": "uk",
+    "country_name": "United Kingdom",
+    "provider": "University of Manchester",
+    "name": "Global Futures Scholarships 2027 \u2014 Bangladesh",
+    "url": "https://www.manchester.ac.uk/study/international/country-specific-information/bangladesh/scholarships/",
+    "kind": "university-scholarship-page",
+    "description": "Bangladesh-specific details for Global Futures Scholarships 2027, including eligibility and deadlines for eligible undergraduate and taught master's applicants."
+  }
+]

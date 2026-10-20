@@ -1,0 +1,31 @@
+{
+  "name": "pothik-premium-platform",
+  "version": "2.1.0",
+  "private": true,
+  "description": "Pothik premium study-abroad guidance and IELTS platform with secure auth, SQLite WASM and RAG tutor",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "seed": "node src/seed.js",
+    "test": "node --test",
+    "embed:resources": "node scripts/embed-resources.js",
+    "check": "node --check src/server.js && node --check src/db.js && node --check src/seed.js && node --check src/opportunities.js && node --check public/app.js && node --check scripts/embed-resources.js && node --check scripts/refresh-scholarships.js",
+    "refresh:scholarships": "node scripts/refresh-scholarships.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.0.0",
+    "multer": "^2.0.2",
+    "nodemailer": "^10.1.7",
+    "openai": "^4.77.0",
+    "sql.js": "^1.13.0",
+    "zod": "^3.24.1"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

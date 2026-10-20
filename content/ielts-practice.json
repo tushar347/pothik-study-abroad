@@ -1,0 +1,487 @@
+[
+  {
+    "id": "read-urban-01",
+    "type": "Reading",
+    "difficulty": "Foundation",
+    "minutes": 5,
+    "title": "Urban green spaces",
+    "prompt": "Read the passage and answer the question.\n\nUrban planners increasingly treat small parks as essential infrastructure. Studies in several cities associate access to green space with more walking and opportunities for social contact. However, the benefits are not distributed equally: lower-income neighbourhoods often have fewer maintained parks. Some councils now prioritise tree cover and safe walking routes in areas with limited public space.\n\nQuestion: Why do some councils prioritise neighbourhoods with limited public space?",
+    "options": [
+      "They have the highest property prices",
+      "Access to the benefits is unequal",
+      "Residents do not want parks",
+      "All parks have been closed"
+    ],
+    "answer": 1,
+    "explanation": "The passage states that benefits are not distributed equally and some lower-income neighbourhoods have fewer maintained parks."
+  },
+  {
+    "id": "read-remote-02",
+    "type": "Reading",
+    "difficulty": "Foundation",
+    "minutes": 5,
+    "title": "Remote work and cities",
+    "prompt": "Read the passage and answer the question.\n\nRemote work has changed weekday travel patterns in many cities. Some central businesses report fewer lunchtime customers, while residential districts have gained demand for cafes and shared workspaces. Researchers caution that the effects differ by industry and city, so a single national figure may hide important local differences.\n\nQuestion: What warning do researchers give?",
+    "options": [
+      "Remote work has ended in every city",
+      "All businesses have benefited equally",
+      "National averages can hide local variation",
+      "Residential areas have lost every cafe"
+    ],
+    "answer": 2,
+    "explanation": "The passage says effects differ by industry and city; a national figure may hide local differences."
+  },
+  {
+    "id": "read-biodiversity-03",
+    "type": "Reading",
+    "difficulty": "Intermediate",
+    "minutes": 6,
+    "title": "Restoring urban wetlands",
+    "prompt": "Read the passage and answer the question.\n\nWetland restoration can reduce flood peaks by storing excess rainwater and can provide habitat for birds and amphibians. Yet restoration projects are not simply a matter of planting vegetation. Engineers must consider water flow, pollution and nearby land use. Long-term monitoring is needed because a site that looks healthy in its first year may not remain ecologically stable.\n\nQuestion: Why is long-term monitoring necessary?",
+    "options": [
+      "Vegetation cannot grow in wetlands",
+      "Early appearance does not guarantee lasting stability",
+      "Birds leave all restored sites",
+      "Engineers do not study water flow"
+    ],
+    "answer": 1,
+    "explanation": "The passage explains that a site may look healthy in year one but later prove unstable."
+  },
+  {
+    "id": "read-library-04",
+    "type": "Reading",
+    "difficulty": "Intermediate",
+    "minutes": 6,
+    "title": "Libraries in the digital age",
+    "prompt": "Read the passage and answer the question.\n\nDigital catalogues have made it easier to locate books, but many public libraries now provide services beyond lending. They offer quiet study spaces, digital-literacy workshops and access to computers. In areas where home internet is unreliable, these services can reduce barriers to education and employment.\n\nQuestion: According to the passage, how can libraries reduce barriers?",
+    "options": [
+      "By replacing every school",
+      "By providing access to study space and digital tools",
+      "By restricting computer use",
+      "By lending only printed books"
+    ],
+    "answer": 1,
+    "explanation": "The passage names quiet study spaces, workshops and computer access as services that can reduce barriers."
+  },
+  {
+    "id": "read-energy-05",
+    "type": "Reading",
+    "difficulty": "Advanced",
+    "minutes": 7,
+    "title": "Energy storage and renewable power",
+    "prompt": "Read the passage and answer the question.\n\nSolar and wind output varies with weather and time of day. Storage can shift some electricity from periods of surplus to periods of higher demand, but storage systems have costs and energy losses. A resilient electricity system therefore combines storage with grid improvements, demand management and a mix of generation sources.\n\nQuestion: What is the author's main point?",
+    "options": [
+      "Storage alone solves every energy problem",
+      "Renewable power should be abandoned",
+      "Storage is useful but works best as part of a wider system",
+      "Electricity demand never changes"
+    ],
+    "answer": 2,
+    "explanation": "The final sentence argues for a combination of storage, grid improvements, demand management and generation sources."
+  },
+  {
+    "id": "listen-booking-01",
+    "type": "Listening",
+    "difficulty": "Foundation",
+    "minutes": 3,
+    "title": "Booking a language workshop",
+    "prompt": "Play the short audio, then answer: What room is the workshop in?",
+    "audio_text": "Hello, this is the Riverside Language Centre. The speaking workshop is on Thursday, the fourteenth of November, at six thirty in the evening. It will take place in Room two hundred and four. Please bring a notebook. Registration closes on Tuesday.",
+    "options": [
+      "Room 104",
+      "Room 204",
+      "Room 240",
+      "Room 214"
+    ],
+    "answer": 1,
+    "explanation": "The speaker says the workshop will take place in Room 204."
+  },
+  {
+    "id": "listen-train-02",
+    "type": "Listening",
+    "difficulty": "Foundation",
+    "minutes": 3,
+    "title": "Train information",
+    "prompt": "Play the short audio, then answer: What time does the train leave?",
+    "audio_text": "Attention passengers. The service to Lakeside, originally scheduled for nine fifteen, will now depart at nine thirty-five from platform six. Passengers should arrive at the platform at least five minutes before departure.",
+    "options": [
+      "9:15",
+      "9:25",
+      "9:35",
+      "9:45"
+    ],
+    "answer": 2,
+    "explanation": "The updated departure time is 9:35, not the original 9:15."
+  },
+  {
+    "id": "listen-library-03",
+    "type": "Listening",
+    "difficulty": "Intermediate",
+    "minutes": 4,
+    "title": "Library membership",
+    "prompt": "Play the short audio, then answer: Which document should the student bring?",
+    "audio_text": "To complete your library membership, please bring your university identity card and proof of your current address. A passport is not required if your university card is valid. The membership desk closes at five p.m.",
+    "options": [
+      "A passport only",
+      "A university card and proof of address",
+      "A driving licence only",
+      "A bank statement and passport"
+    ],
+    "answer": 1,
+    "explanation": "The speaker asks for a university identity card and proof of current address."
+  },
+  {
+    "id": "listen-seminar-04",
+    "type": "Listening",
+    "difficulty": "Intermediate",
+    "minutes": 4,
+    "title": "Research seminar arrangements",
+    "prompt": "Play the short audio, then answer: Where will the seminar take place?",
+    "audio_text": "The environmental research seminar has moved from the main auditorium to the second-floor conference room. The starting time remains unchanged at two p.m. Please collect your name badge at the entrance.",
+    "options": [
+      "Main auditorium",
+      "First-floor laboratory",
+      "Second-floor conference room",
+      "Online only"
+    ],
+    "answer": 2,
+    "explanation": "The venue has moved to the second-floor conference room; the time is unchanged."
+  },
+  {
+    "id": "listen-deadline-05",
+    "type": "Listening",
+    "difficulty": "Advanced",
+    "minutes": 4,
+    "title": "Assignment submission",
+    "prompt": "Play the short audio, then answer: What is the final submission time?",
+    "audio_text": "A reminder that the project report is due on Monday. Upload the final PDF before four p.m. Files received after four will be marked late, even if the upload began earlier. If you have a technical problem, contact the course office before the deadline.",
+    "options": [
+      "12 noon",
+      "3 p.m.",
+      "4 p.m.",
+      "5 p.m."
+    ],
+    "answer": 2,
+    "explanation": "The final PDF must be uploaded before 4 p.m."
+  },
+  {
+    "id": "write-opinion-01",
+    "type": "Writing",
+    "difficulty": "Foundation",
+    "minutes": 20,
+    "title": "Task 2: public transport investment",
+    "prompt": "Some people believe governments should invest more in public transport than in new roads. To what extent do you agree or disagree? Write a clear position and develop two main points with examples.",
+    "answer": null,
+    "explanation": "Review: Did you answer the full question? Is your position clear throughout? Does each body paragraph contain a main idea, explanation and relevant example? Are linking words natural? Check grammar and word choice."
+  },
+  {
+    "id": "write-education-02",
+    "type": "Writing",
+    "difficulty": "Foundation",
+    "minutes": 20,
+    "title": "Task 2: practical skills at school",
+    "prompt": "Some people think schools should teach more practical skills, such as budgeting and communication, while others believe academic subjects should remain the main focus. Discuss both views and give your opinion.",
+    "answer": null,
+    "explanation": "Review both sides fairly, state your own opinion, develop each argument and ensure the conclusion follows from your discussion."
+  },
+  {
+    "id": "write-chart-03",
+    "type": "Writing",
+    "difficulty": "Intermediate",
+    "minutes": 20,
+    "title": "Task 1: describe a simple chart",
+    "prompt": "A university survey reports the following preferred study locations: library 45%, home 30%, shared study spaces 15%, and cafes 10%. Write at least 150 words summarising the information. Include an overview and key comparisons; do not give personal opinions.",
+    "answer": null,
+    "explanation": "Review: include an overview, compare the largest and smallest categories, use accurate figures, group related data and avoid explanations not shown by the chart."
+  },
+  {
+    "id": "write-environment-04",
+    "type": "Writing",
+    "difficulty": "Intermediate",
+    "minutes": 22,
+    "title": "Task 2: individual and government action",
+    "prompt": "Some people say environmental problems can only be solved by governments and large companies, while others believe individuals can make a difference. Discuss both views and give your opinion.",
+    "answer": null,
+    "explanation": "Review task response, balance, paragraph development, examples, cohesion, lexical precision and grammatical range."
+  },
+  {
+    "id": "write-technology-05",
+    "type": "Writing",
+    "difficulty": "Advanced",
+    "minutes": 22,
+    "title": "Task 2: technology and independent learning",
+    "prompt": "Online learning tools make education more accessible, but some people worry that students become less independent thinkers. Discuss the advantages and disadvantages and give your opinion.",
+    "answer": null,
+    "explanation": "Ensure both advantages and disadvantages are developed, your position is consistent, and examples support rather than replace reasoning."
+  },
+  {
+    "id": "speak-skill-01",
+    "type": "Speaking",
+    "difficulty": "Foundation",
+    "minutes": 3,
+    "title": "Part 1: daily routines",
+    "prompt": "Answer each question aloud in 2–4 natural sentences: What is the busiest part of your day? Do you prefer to plan your day or decide as you go? Has your routine changed in recent years?",
+    "answer": null,
+    "explanation": "Aim for direct answers with a reason or specific detail. Avoid memorised scripts. Review fluency, vocabulary, grammar and pronunciation."
+  },
+  {
+    "id": "speak-place-02",
+    "type": "Speaking",
+    "difficulty": "Foundation",
+    "minutes": 4,
+    "title": "Part 2: describe a place to study",
+    "prompt": "Describe a place where you like to study. Say where it is, what it looks like, when you use it, and why it helps you concentrate. Make brief notes and speak for 1–2 minutes.",
+    "answer": null,
+    "explanation": "Use a clear sequence, specific sensory details and varied sentence structures. Keep notes short rather than writing a full script."
+  },
+  {
+    "id": "speak-person-03",
+    "type": "Speaking",
+    "difficulty": "Intermediate",
+    "minutes": 4,
+    "title": "Part 2: describe someone who taught you something",
+    "prompt": "Describe a person who taught you a useful skill. Say who the person is, what you learned, how they taught you and why the skill matters to you. Speak for 1–2 minutes.",
+    "answer": null,
+    "explanation": "Extend each point with a detail or example. Use past tenses accurately and avoid repeating the same adjectives."
+  },
+  {
+    "id": "speak-learning-04",
+    "type": "Speaking",
+    "difficulty": "Intermediate",
+    "minutes": 5,
+    "title": "Part 3: education and technology",
+    "prompt": "Discuss aloud: How has technology changed education? Should every student learn online skills? What can teachers do that technology cannot easily replace? Give reasons and examples.",
+    "answer": null,
+    "explanation": "Part 3 answers should develop ideas beyond personal preference. Compare, qualify and support claims with relevant examples."
+  },
+  {
+    "id": "speak-cities-05",
+    "type": "Speaking",
+    "difficulty": "Advanced",
+    "minutes": 5,
+    "title": "Part 3: cities and public spaces",
+    "prompt": "Discuss aloud: Why do people need public spaces? How should cities balance housing and green areas? Do you think public spaces will become more important in the future?",
+    "answer": null,
+    "explanation": "Use comparisons, cautious language and cause-effect reasoning. Aim for precision rather than unnecessarily complex vocabulary."
+  },
+  {
+    "id": "read-water-11",
+    "type": "Reading",
+    "difficulty": "Foundation",
+    "minutes": 5,
+    "title": "Water conservation at home",
+    "prompt": "Read the passage and answer.\n\nHouseholds can reduce water use by repairing leaks, installing efficient showerheads and running washing machines only with full loads. Some local authorities also offer free water audits. These measures are most effective when people can see their usage and receive practical advice.\n\nQuestion: What helps make water-saving measures more effective?",
+    "options": [
+      "Practical advice and visible usage information",
+      "Using more water at night",
+      "Avoiding repairs",
+      "Removing water meters"
+    ],
+    "answer": 0,
+    "explanation": "The passage says measures work best when people can see usage and receive practical advice."
+  },
+  {
+    "id": "read-commute-12",
+    "type": "Reading",
+    "difficulty": "Intermediate",
+    "minutes": 6,
+    "title": "Commuting and flexible hours",
+    "prompt": "Read the passage and answer.\n\nFlexible working hours can spread commuter traffic across a longer period, reducing peak congestion. However, the effect depends on how many employers participate and whether public transport operates frequently outside traditional rush hours. A policy may therefore need coordination across employers and transport providers.\n\nQuestion: Why might flexible hours have limited impact?",
+    "options": [
+      "All commuters work from home",
+      "Transport may be less frequent outside peak times",
+      "Employers never change schedules",
+      "Roads are always empty"
+    ],
+    "answer": 1,
+    "explanation": "The passage says public transport frequency outside rush hours can limit the effect."
+  },
+  {
+    "id": "read-seed-13",
+    "type": "Reading",
+    "difficulty": "Advanced",
+    "minutes": 7,
+    "title": "Seed banks and biodiversity",
+    "prompt": "Read the passage and answer.\n\nSeed banks preserve plant genetic diversity for research and future restoration. Yet stored seeds are not a complete substitute for protecting living habitats, where plants interact with pollinators, soil organisms and climate. Conservation specialists therefore view seed storage as one tool within a broader strategy.\n\nQuestion: What is the passage’s main conclusion?",
+    "options": [
+      "Seed banks should replace all habitats",
+      "Seed storage is useful but cannot replace habitat protection",
+      "All seeds lose value immediately",
+      "Pollinators are irrelevant to plants"
+    ],
+    "answer": 1,
+    "explanation": "The passage presents seed banks as one tool, not a substitute for protecting habitats."
+  },
+  {
+    "id": "read-transport-14",
+    "type": "Reading",
+    "difficulty": "Intermediate",
+    "minutes": 6,
+    "title": "Evaluating transport surveys",
+    "prompt": "Read the passage and answer.\n\nA transport survey may report that most respondents drive to work, but the result depends on who was invited to participate and when the survey was conducted. If people without internet access are underrepresented, the findings may not reflect the whole community. Researchers should describe the sample and its limitations.\n\nQuestion: What should researchers do?",
+    "options": [
+      "Hide how participants were selected",
+      "Describe the sample and limitations",
+      "Assume every resident answered",
+      "Ignore access to the survey"
+    ],
+    "answer": 1,
+    "explanation": "The passage explicitly recommends describing the sample and its limitations."
+  },
+  {
+    "id": "listen-flight-11",
+    "type": "Listening",
+    "difficulty": "Foundation",
+    "minutes": 3,
+    "title": "Flight gate announcement",
+    "prompt": "Play the audio, then answer: Which gate should passengers use?",
+    "audio_text": "Passengers travelling on flight BQ 218 to Singapore should note a gate change. Boarding will now take place at Gate twenty-seven, not Gate seventeen. Boarding begins at quarter past six, and the flight is still scheduled to depart at seven.",
+    "options": [
+      "Gate 17",
+      "Gate 20",
+      "Gate 27",
+      "Gate 70"
+    ],
+    "answer": 2,
+    "explanation": "The announcement corrects the gate from 17 to 27."
+  },
+  {
+    "id": "listen-workshop-12",
+    "type": "Listening",
+    "difficulty": "Foundation",
+    "minutes": 3,
+    "title": "Workshop materials",
+    "prompt": "Play the audio, then answer: What should participants bring?",
+    "audio_text": "The design workshop starts at ten on Saturday in Studio Four. All equipment will be provided, but participants should bring a notebook and a pencil. Please use the side entrance because the main entrance is being repaired.",
+    "options": [
+      "A laptop and camera",
+      "A notebook and pencil",
+      "A printed ticket only",
+      "Their own projector"
+    ],
+    "answer": 1,
+    "explanation": "The speaker asks participants to bring a notebook and a pencil."
+  },
+  {
+    "id": "listen-appointment-13",
+    "type": "Listening",
+    "difficulty": "Intermediate",
+    "minutes": 4,
+    "title": "Changing a meeting time",
+    "prompt": "Play the audio, then answer: What is the new meeting time?",
+    "audio_text": "The project meeting originally planned for Wednesday at two has been moved to Thursday at half past two. The room remains the same, Room 18, and the agenda has not changed. Please let your supervisor know if you cannot attend.",
+    "options": [
+      "Wednesday 2:00",
+      "Thursday 2:00",
+      "Thursday 2:30",
+      "Friday 2:30"
+    ],
+    "answer": 2,
+    "explanation": "The meeting is now Thursday at 2:30."
+  },
+  {
+    "id": "listen-volunteer-14",
+    "type": "Listening",
+    "difficulty": "Advanced",
+    "minutes": 4,
+    "title": "Volunteer induction",
+    "prompt": "Play the audio, then answer: Where does induction begin?",
+    "audio_text": "All new volunteers should meet at the visitor centre at eight forty-five. The safety briefing begins at nine in the garden classroom. After the briefing, the group will walk to the greenhouse. Please do not go directly to the greenhouse before checking in.",
+    "options": [
+      "At the greenhouse",
+      "At the visitor centre",
+      "In the garden classroom at 8:45",
+      "At the main car park"
+    ],
+    "answer": 1,
+    "explanation": "Volunteers first meet at the visitor centre at 8:45."
+  },
+  {
+    "id": "write-technology-11",
+    "type": "Writing",
+    "difficulty": "Foundation",
+    "minutes": 20,
+    "title": "Task 2: mobile phones in classrooms",
+    "prompt": "Some schools restrict students from using mobile phones during lessons. Do you think the advantages of this policy outweigh the disadvantages?",
+    "options": [],
+    "answer": null,
+    "explanation": "Compare benefits and costs, decide which side is stronger, and support your position with developed reasons and examples."
+  },
+  {
+    "id": "write-city-12",
+    "type": "Writing",
+    "difficulty": "Intermediate",
+    "minutes": 22,
+    "title": "Task 2: city-centre living",
+    "prompt": "More people are choosing to live in city centres, while others prefer quieter areas outside cities. Discuss the reasons for both choices and give your opinion.",
+    "options": [],
+    "answer": null,
+    "explanation": "Explain reasons for both choices, compare their implications and state your view consistently."
+  },
+  {
+    "id": "write-task1-13",
+    "type": "Writing",
+    "difficulty": "Intermediate",
+    "minutes": 20,
+    "title": "Task 1: library visits",
+    "prompt": "A library recorded 120 visitors on Monday, 150 on Tuesday, 90 on Wednesday and 180 on Thursday. Summarise the information in at least 150 words, selecting and reporting the main features.",
+    "options": [],
+    "answer": null,
+    "explanation": "Give an overview of the pattern, compare the highest and lowest days, and report figures accurately without adding unsupported explanations."
+  },
+  {
+    "id": "write-health-14",
+    "type": "Writing",
+    "difficulty": "Advanced",
+    "minutes": 22,
+    "title": "Task 2: preventing health problems",
+    "prompt": "Some people think governments should spend more money preventing illness than treating it. To what extent do you agree or disagree?",
+    "options": [],
+    "answer": null,
+    "explanation": "Define prevention and treatment clearly, explain the trade-offs and make your degree of agreement explicit."
+  },
+  {
+    "id": "speak-hometown-11",
+    "type": "Speaking",
+    "difficulty": "Foundation",
+    "minutes": 3,
+    "title": "Part 1: your hometown",
+    "prompt": "Answer aloud: What do you like about your hometown? Has it changed much? Would you recommend it to visitors? Extend each answer with a specific reason or detail.",
+    "options": [],
+    "answer": null,
+    "explanation": "Keep answers natural and relevant. Use one clear detail rather than a long memorised speech."
+  },
+  {
+    "id": "speak-goal-12",
+    "type": "Speaking",
+    "difficulty": "Foundation",
+    "minutes": 4,
+    "title": "Part 2: describe a goal",
+    "prompt": "Describe a goal you would like to achieve. Say what it is, why it matters, what you need to do and how you will feel if you achieve it. Speak for 1–2 minutes.",
+    "options": [],
+    "answer": null,
+    "explanation": "Use a clear sequence and specific steps. Explain why the goal matters to you."
+  },
+  {
+    "id": "speak-transport-13",
+    "type": "Speaking",
+    "difficulty": "Intermediate",
+    "minutes": 5,
+    "title": "Part 3: public transport",
+    "prompt": "Discuss aloud: Why do some people prefer private cars? How can cities encourage public transport? Should public transport be free? Explain your reasoning.",
+    "options": [],
+    "answer": null,
+    "explanation": "Compare perspectives and acknowledge practical considerations such as cost, access and reliability."
+  },
+  {
+    "id": "speak-learning-14",
+    "type": "Speaking",
+    "difficulty": "Advanced",
+    "minutes": 5,
+    "title": "Part 3: lifelong learning",
+    "prompt": "Discuss aloud: Why do adults return to education? Should employers fund staff training? How might lifelong learning change as technology develops?",
+    "options": [],
+    "answer": null,
+    "explanation": "Develop abstract points with cause-and-effect reasoning, examples and cautious predictions."
+  }
+]
