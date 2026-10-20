@@ -3,7 +3,7 @@ cd /d "%~dp0"
 if not exist .env copy .env.example .env >nul
 if not exist node_modules (
   echo Installing dependencies...
-  call npm install
+  call npm ci
   if errorlevel 1 goto failed
 )
 call npm run check
