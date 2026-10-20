@@ -1,0 +1,23 @@
+POTHIK CONTENT-LOADING HOTFIX v2.1.1
+
+This is a safe frontend patch for partial rendering when one or more API sections fail.
+It does not replace your .env file or your SQLite database.
+
+INSTALL ON WINDOWS
+1. Stop Pothik in the VS Code terminal with Ctrl+C.
+2. Extract this ZIP directly into D:\pothik-premium (allow replacement of public\app.js).
+3. Keep your existing .env and data\pothik.sqlite files unchanged.
+4. Run:
+     cd D:\pothik-premium
+     npm run check
+     npm start
+5. In Chrome, open http://localhost:3000 and press Ctrl+F5.
+
+WHAT CHANGED
+- A failure in one API no longer prevents all other homepage sections from rendering.
+- The site configuration has an alternate same-origin endpoint at /site-content.json.
+- Browser Console now logs the exact API path and status for failed requests.
+- The toast names the sections that failed instead of claiming only that the server may be down.
+
+If a section still fails, open Chrome DevTools (F12) > Console and copy the lines starting with
+[Pothik boot] or [Pothik UI]. Those lines identify the exact endpoint/component to fix.

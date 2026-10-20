@@ -1,0 +1,18 @@
+Pothik scholarship listing hotfix
+
+Purpose:
+- Normalize country filters that may contain country names instead of slugs (e.g. United States -> usa).
+- Defensively seed curated scholarship opportunity links when the opportunities endpoint is requested, so existing local databases can recover missing starter rows.
+- Clarify source status when no successful check timestamp has been recorded.
+
+Install:
+1. Stop Pothik with Ctrl+C in the terminal.
+2. Back up D:\pothik-premium\src\server.js and D:\pothik-premium\public\app.js.
+3. Extract this ZIP directly into D:\pothik-premium, allowing replacement of src\server.js and public\app.js.
+4. Run:
+   npm run check
+   npm start
+5. Open http://localhost:3000/api/opportunities?country=usa in your browser. The JSON should contain scholarship opportunities.
+6. Open http://localhost:3000 and press Ctrl+F5.
+
+This patch does not modify .env or data\pothik.sqlite. It does not claim that scholarship dates are independently verified. Each official page remains the authority.
