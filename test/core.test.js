@@ -84,6 +84,46 @@ test('a failed source refresh preserves curated scholarship records', async t =>
   assert.equal(db.prepare('SELECT COUNT(*) AS n FROM scholarship_opportunities WHERE official_url=?').get(existing.official_url).n, 1);
 });
 
+test('Gemini provider sends system prompt and history, and returns the answer text', async t => {
+  const originalFetch = global.fetch;
+  const originalEnv = { GEMINI_API_KEY: process.env.GEMINI_API_KEY, GEMINI_MODEL: process.env.GEMINI_MODEL };
+  t.after(() => {
+    global.fetch = originalFetch;
+    for (const [k, v] of Object.entries(originalEnv)) { if (v === undefined) delete process.env[k]; else process.env[k] = v; }
+  });
+  process.env.GEMINI_API_KEY = 'test-key';
+  process.env.GEMINI_MODEL = 'gemini-test';
+  const ai = require('../src/ai');
+  let request;
+  global.fetch = async (url, init) => {
+    request = { url, headers: init.headers, body: JSON.parse(init.body) };
+    return { ok: true, status: 200, json: async () => ({ candidates: [{ finishReason: 'STOP', content: { parts: [{ text: 'thinking', thought: true }, { text: 'Hello from Gemini' }] } }] }) };
+  };
+
+  assert.equal(ai.provider(), 'gemini');
+  const answer = await ai.generate({ system: 'Be helpful', history: [{ role: 'user', content: 'Hi' }, { role: 'assistant', content: 'Hello' }], question: 'Germany costs?' });
+  assert.equal(answer, 'Hello from Gemini');
+  assert.match(request.url, /models\/gemini-test:generateContent$/);
+  assert.equal(request.headers['x-goog-api-key'], 'test-key');
+  assert.equal(request.body.systemInstruction.parts[0].text, 'Be helpful');
+  assert.deepEqual(request.body.contents.map(c => c.role), ['user', 'model', 'user']);
+
+  global.fetch = async () => ({ ok: false, status: 400, statusText: 'Bad Request', json: async () => ({ error: { message: 'API key not valid' } }) });
+  await assert.rejects(ai.generate({ system: 's', question: 'q' }), /Gemini 400: API key not valid/);
+
+  // An overloaded main model falls through to the next configured model.
+  process.env.GEMINI_FALLBACK_MODEL = 'gemini-backup';
+  t.after(() => { delete process.env.GEMINI_FALLBACK_MODEL; });
+  const tried = [];
+  global.fetch = async url => {
+    tried.push(url.match(/models\/([^:]+):/)[1]);
+    if (tried.length === 1) return { ok: false, status: 503, statusText: 'Unavailable', json: async () => ({ error: { message: 'high demand' } }) };
+    return { ok: true, status: 200, json: async () => ({ candidates: [{ content: { parts: [{ text: 'Backup answer' }] } }] }) };
+  };
+  assert.equal(await ai.generate({ system: 's', question: 'q' }), 'Backup answer');
+  assert.deepEqual(tried, ['gemini-test', 'gemini-backup']);
+});
+
 test('database initialization refuses duplicate legacy rows without rewriting the file', async t => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'pothik-migration-test-'));
   const databasePath = path.join(directory, 'pothik.sqlite');

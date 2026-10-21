@@ -1,6 +1,6 @@
 const $ = (s, root = document) => root.querySelector(s);
 const $$ = (s, root = document) => [...root.querySelectorAll(s)];
-const state = { user: null, site: null, countries: [], resources: [], ieltsResources: [], programs: [], scholarships: [], opportunities: [], exercises: [], roadmaps: [], selectedCountry: 'germany', skill: 'All', authMode: 'login', chatBusy: false, adminContent: null };
+const state = { user: null, site: null, countries: [], resources: [], ieltsResources: [], programs: [], scholarships: [], opportunities: [], exercises: [], roadmaps: [], selectedCountry: 'germany', skill: 'All', authMode: 'login', chatBusy: false, chatHistory: [], adminContent: null };
 const esc = (v = '') => String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 function toast(message) { const t = $('#toast'); t.textContent = message; t.classList.add('show'); clearTimeout(window._toastTimer); window._toastTimer = setTimeout(() => t.classList.remove('show'), 3500); }
 async function api(url, options = {}) {
@@ -233,7 +233,9 @@ async function toggleLogin() {
 function appendChat(role, text, sources = [], loading = false) {
   const wrap = document.createElement('div'); wrap.className = `chat-message ${role === 'user' ? 'user' : 'assistant'}`;
   if (role !== 'user') { const av = document.createElement('span'); av.className = 'chat-avatar'; av.textContent = 'প'; wrap.appendChild(av); }
-  const content = document.createElement('div'); content.className = 'message-content'; const p = document.createElement('p'); p.textContent = text; if (loading) p.classList.add('loading-text'); content.appendChild(p);
+  const content = document.createElement('div'); content.className = 'message-content';
+  if (role !== 'user' && !loading) renderRichText(content, text);
+  else { const p = document.createElement('p'); p.textContent = text; if (loading) p.classList.add('loading-text'); content.appendChild(p); }
   if (!loading && role !== 'user') { const small = document.createElement('small'); small.textContent = 'Guidance only. Verify important requirements with official sources.'; content.appendChild(small); }
   if (sources?.length) {
     const links = document.createElement('div'); links.className = 'source-links';
@@ -241,6 +243,25 @@ function appendChat(role, text, sources = [], loading = false) {
     if (links.childElementCount) content.appendChild(links);
   }
   wrap.appendChild(content); $('#chatMessages').appendChild(wrap); $('#chatMessages').scrollTop = $('#chatMessages').scrollHeight; return wrap;
+}
+// Renders the small markdown subset the counsellor uses (**bold**, "-" and "1." lists) with DOM nodes only, never innerHTML.
+function appendInline(el, text) {
+  String(text).split(/\*\*(.+?)\*\*/g).forEach((part, i) => { if (!part) return; if (i % 2) { const b = document.createElement('strong'); b.textContent = part; el.appendChild(b); } else el.appendChild(document.createTextNode(part.replace(/^#{1,6}\s+/, ''))); });
+}
+function renderRichText(container, text) {
+  let list = null, para = null;
+  String(text || '').split('\n').forEach(line => {
+    const item = line.match(/^\s*([-*•]|\d+[.)])\s+(.*)$/);
+    if (item) {
+      const tag = /\d/.test(item[1]) ? 'OL' : 'UL';
+      if (!list || list.tagName !== tag) { list = document.createElement(tag.toLowerCase()); container.appendChild(list); }
+      const li = document.createElement('li'); appendInline(li, item[2]); list.appendChild(li); para = null; return;
+    }
+    list = null;
+    if (!line.trim()) { para = null; return; }
+    if (para) para.appendChild(document.createTextNode('\n')); else { para = document.createElement('p'); container.appendChild(para); }
+    appendInline(para, line);
+  });
 }
 function renderChatPrompts() {
   const prompts = state.site?.assistant?.prompts || [];
@@ -254,7 +275,12 @@ async function submitTutor(e) {
   const form = e.currentTarget; const question = form.question.value.trim(); if (!question) return;
   appendChat('user', question); form.question.value = ''; const wait = appendChat('assistant', 'Looking for relevant guidance and sources…', [], true);
   state.chatBusy = true; const send = form.querySelector('button[type=submit]'); send.disabled = true;
-  try { const data = await api('/api/tutor', { method: 'POST', body: JSON.stringify({ question, mode: form.mode.value, language: state.user?.preferred_language === 'bn' ? 'bn' : 'en' }) }); wait.remove(); appendChat('assistant', data.answer, data.sources); }
+  try {
+    const history = state.chatHistory.slice(-10);
+    const data = await api('/api/tutor', { method: 'POST', body: JSON.stringify({ question, mode: form.mode.value, language: state.user?.preferred_language === 'bn' ? 'bn' : 'en', history }) });
+    wait.remove(); appendChat('assistant', data.answer, data.sources);
+    if (data.generated) state.chatHistory.push({ role: 'user', content: question.slice(0, 4000) }, { role: 'assistant', content: String(data.answer).slice(0, 4000) });
+  }
   catch (err) { wait.remove(); appendChat('assistant', err.message); }
   finally { state.chatBusy = false; send.disabled = false; }
 }
@@ -299,7 +325,9 @@ function bindEvents() {
   $('#openCounsellor').addEventListener('click', openCounsellor); $('#closeCounsellor').addEventListener('click', closeCounsellor);
   $('#closeNudge').addEventListener('click', () => { $('#counsellorNudge').hidden = true; });
   $('#tutorForm').addEventListener('submit', submitTutor);
-  $('#clearChat').addEventListener('click', () => { $('#chatMessages').innerHTML = ''; appendChat('assistant', 'Conversation cleared. What would you like to work on next?'); });
+  // Enter sends, Shift+Enter adds a new line. Skip while an IME (e.g. Bangla phonetic input) is composing a word.
+  $('#tutorForm [name=question]').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); $('#tutorForm').requestSubmit(); } });
+  $('#clearChat').addEventListener('click', () => { $('#chatMessages').innerHTML = ''; state.chatHistory = []; appendChat('assistant', 'Conversation cleared. What would you like to work on next?'); });
   $('#footerAdmin').addEventListener('click', openAdmin); $('#closeAdmin').addEventListener('click', () => { $('#adminPanel').hidden = true; });
   $('#assetUploadForm').addEventListener('submit', async e => { e.preventDefault(); const message = $('#assetMessage'); message.textContent = ''; const fd = new FormData(e.currentTarget); try { const result = await api('/api/admin/assets', { method: 'POST', body: fd }); assignImage($('#assetTarget').value, result.url); message.textContent = `Uploaded ${result.name} and assigned ${result.url}. Save the configuration to publish the change.`; } catch (err) { message.textContent = err.message; } });
   $('#contentForm').addEventListener('submit', async e => { e.preventDefault(); const message = $('#contentMessage'); try { const parsed = JSON.parse($('#contentJson').value); const result = await api('/api/admin/site-content', { method: 'PUT', body: JSON.stringify(parsed) }); state.adminContent = parsed; state.site = parsed; applyBrand(); renderCountryTabs(); renderIeltsCards(); message.textContent = result.message; toast('Site configuration saved.'); } catch (err) { message.textContent = err instanceof SyntaxError ? 'Invalid JSON. Check commas, quotes and brackets.' : err.message; } });
