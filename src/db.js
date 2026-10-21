@@ -68,6 +68,11 @@ async function createDatabase(databasePath = process.env.DATABASE_PATH) {
       email_verified INTEGER NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
+    CREATE TABLE IF NOT EXISTS student_profiles (
+      user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      data_json TEXT NOT NULL DEFAULT '{}',
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
     CREATE TABLE IF NOT EXISTS sessions (
       token_hash TEXT PRIMARY KEY,
       user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -173,6 +178,7 @@ async function createDatabase(databasePath = process.env.DATABASE_PATH) {
   `);
   // Safe migration for databases created by an earlier version.
   try { raw.run('ALTER TABLE users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 0'); } catch (e) { if (!String(e.message).includes('duplicate column name')) throw e; }
+  try { raw.run('ALTER TABLE users ADD COLUMN avatar_path TEXT'); } catch (e) { if (!String(e.message).includes('duplicate column name')) throw e; }
   try { raw.run('ALTER TABLE resources ADD COLUMN embedding_json TEXT'); } catch (e) { if (!String(e.message).includes('duplicate column name')) throw e; }
   // Preserve legacy rows and stop with a clear error instead of silently deleting duplicates.
   const duplicateGroups = [

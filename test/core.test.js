@@ -124,6 +124,32 @@ test('Gemini provider sends system prompt and history, and returns the answer te
   assert.deepEqual(tried, ['gemini-test', 'gemini-backup']);
 });
 
+test('student profile validation accepts real score formats and rejects impossible ones', () => {
+  const { profileSchema, completeness, summarize } = require('../src/profile');
+  const ok = profileSchema.safeParse({
+    phone: '+880 1711-000000', targetDegree: 'master', fieldOfStudy: 'Computer Science', preferredCountries: ['germany', 'canada'],
+    intakeSeason: 'fall', intakeYear: '2027', currentStatus: 'bachelor-completed', sscGpa: '5', hscGpa: 4.83,
+    bachelorCgpa: 3.45, bachelorScale: '4', englishTest: 'ielts-academic', ieltsOverall: 7.5, ieltsWriting: 6.5,
+    graduateTest: 'gre', greVerbal: 155, greQuant: 165, greWriting: 4, unknownField: 'dropped'
+  });
+  assert.equal(ok.success, true, JSON.stringify(ok.error?.issues));
+  assert.equal(ok.data.intakeYear, 2027);
+  assert.equal(ok.data.unknownField, undefined);
+  assert.match(summarize(ok.data, 'Rahim Uddin'), /IELTS Academic — overall 7.5/);
+  assert.ok(completeness(ok.data).missing.includes('budget'));
+
+  const errorsFor = input => profileSchema.safeParse(input).error?.issues.map(i => i.path[0]) || [];
+  assert.deepEqual(errorsFor({ ieltsOverall: 7.25 }), ['ieltsOverall']);
+  assert.deepEqual(errorsFor({ greQuant: 171 }), ['greQuant']);
+  assert.deepEqual(errorsFor({ bachelorCgpa: 3.9, bachelorScale: '4' }), []);
+  assert.deepEqual(errorsFor({ bachelorCgpa: 4.5, bachelorScale: '4' }), ['bachelorCgpa']);
+  assert.deepEqual(errorsFor({ toeflScale: 'new', toeflTotal: 95 }), ['toeflTotal']);
+  assert.deepEqual(errorsFor({ toeflScale: 'old', toeflTotal: 95 }), []);
+  assert.deepEqual(errorsFor({ gmatTotal: 650 }), ['gmatTotal']);
+  assert.deepEqual(errorsFor({ gmatTotal: 655 }), []);
+  assert.deepEqual(errorsFor({ preferredCountries: ['atlantis'] }), ['preferredCountries']);
+});
+
 test('database initialization refuses duplicate legacy rows without rewriting the file', async t => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'pothik-migration-test-'));
   const databasePath = path.join(directory, 'pothik.sqlite');

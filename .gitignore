@@ -7,6 +7,7 @@ data/*.db
 data/*.wasm
 data/*.bak
 data/*.sqlite-*
+data/avatars/
 public/uploads/*
 !public/uploads/.gitkeep
 npm-debug.log*

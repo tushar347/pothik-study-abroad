@@ -157,7 +157,9 @@ function renderScholarships() {
 }
 function updateUserUI() {
   const u = state.user; const letter = u?.name?.trim()?.[0]?.toUpperCase() || 'G';
-  $('#profileButton').textContent = letter; $('#headerLogin').textContent = u ? 'Sign out' : 'Log in'; $('#headerSignup').hidden = Boolean(u);
+  document.body.classList.toggle('signed-in', Boolean(u));
+  $('#profileButton').textContent = letter;
+  if (u?.avatar_url) { const img = document.createElement('img'); img.src = u.avatar_url; img.alt = ''; img.onerror = () => { $('#profileButton').textContent = letter; }; $('#profileButton').replaceChildren(img); } $('#profileButton').setAttribute('aria-label', u ? 'Open my profile' : 'Log in'); $('#profileButton').title = u ? 'My profile' : 'Log in'; $('#headerLogin').textContent = u ? 'Sign out' : 'Log in'; $('#headerSignup').hidden = Boolean(u);
   $('#footerLogin').textContent = u ? 'Sign out' : 'Log in'; $('#footerSignup').hidden = Boolean(u); $('#footerAdmin').hidden = u?.role !== 'admin'; $('#refreshScholarships').hidden = u?.role !== 'admin';
   setText('#savedRoadmapCount', u ? `${state.roadmaps.length} saved` : 'Sign in to save');
   renderRoadmaps();
@@ -180,6 +182,8 @@ function renderRoadmaps() {
 }
 async function loadRoadmaps() { if (!state.user) { state.roadmaps = []; renderRoadmaps(); return; } const d = await api('/api/roadmaps'); state.roadmaps = d.roadmaps; renderRoadmaps(); setText('#savedRoadmapCount', `${state.roadmaps.length} saved`); }
 function showAuth(mode = 'login') {
+  // Account creation is the multi-step student signup in profile.js.
+  if (mode === 'signup') { closeAuth(); openSignup(); return; }
   state.authMode = mode; $('#authModal').hidden = false; $('#authMessage').textContent = '';
   $('#authTabs').hidden = !['login', 'signup'].includes(mode); $('#authNameField').hidden = mode !== 'signup'; $('#authNameField input').required = mode === 'signup';
   $('#authForm [name=email]').required = mode !== 'reset';
@@ -221,7 +225,7 @@ async function submitAuth(e) {
       if (data.developmentVerificationUrl) $('#authMessage').innerHTML = `${esc(data.message)}<br><a class="text-link" href="${esc(data.developmentVerificationUrl)}">Verify this development account ↗</a>`;
       return;
     }
-    state.user = data.user; await loadRoadmaps(); updateUserUI(); closeAuth(); toast(`Welcome${state.user.name ? ', ' + state.user.name.split(' ')[0] : ''}.`);
+    state.user = data.user; await loadRoadmaps(); updateUserUI(); closeAuth(); toast(`Welcome back${state.user.name ? ', ' + state.user.name.split(' ')[0] : ''}. Open your profile from the avatar at the top.`);
   } catch (err) { $('#authMessage').textContent = err.message; }
   finally { button.disabled = false; }
 }
@@ -316,7 +320,7 @@ function bindEvents() {
   $('#reportForm').addEventListener('submit', async e => { e.preventDefault(); const fd = new FormData(e.currentTarget); const msg = $('#reportMessage'); msg.textContent = ''; try { const data = await api('/api/reports', { method: 'POST', body: JSON.stringify(Object.fromEntries(fd.entries())) }); msg.textContent = `${data.message} Reference: ${data.reference}`; e.currentTarget.reset(); } catch (err) { msg.textContent = err.message; } });
   $('#headerLogin').addEventListener('click', toggleLogin); $('#footerLogin').addEventListener('click', toggleLogin);
   $('#headerSignup').addEventListener('click', () => showAuth('signup')); $('#footerSignup').addEventListener('click', () => showAuth('signup'));
-  $('#profileButton').addEventListener('click', () => state.user ? toast(`Signed in as ${state.user.email}`) : showAuth('login'));
+  $('#profileButton').addEventListener('click', () => state.user ? openProfile() : showAuth('login'));
   $('#closeAuth').addEventListener('click', closeAuth); $('#authModal').addEventListener('click', e => { if (e.target.id === 'authModal') closeAuth(); });
   $('#authTabs').querySelectorAll('[data-auth-tab]').forEach(b => b.addEventListener('click', () => showAuth(b.dataset.authTab)));
   $('#authForm').addEventListener('submit', submitAuth); $('#forgotPassword').addEventListener('click', () => showAuth('forgot'));
