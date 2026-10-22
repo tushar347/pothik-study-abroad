@@ -40,7 +40,7 @@
     {"slug":"speaking","name":"Speaking","label":"Speak with confidence","description":"Work on fluency, coherence, vocabulary and structured speaking practice.","image":"/assets/ielts/speaking.webp","imageAlt":"Student practising speaking in a library setting","accent":"#E8CDD2"}
   ],
   "assistant": {
-    "name": "Pothik counsellor",
+    "name": "Pothik Counsellor",
     "greeting": "Planning to study abroad or prepare for IELTS? Ask me a question. I’ll look for relevant guidance and show the sources I use.",
     "prompts": ["How do I start a Master's application?", "Help me plan IELTS practice", "What should I verify before paying an agency?"]
   }

@@ -40,7 +40,7 @@
     email: { label: 'Email address', type: 'email', required: true, autocomplete: 'email', maxlength: 180, placeholder: 'you@example.com' },
     password: { label: 'Password', type: 'password', required: true, minlength: 12, maxlength: 72, autocomplete: 'new-password', placeholder: 'At least 12 characters', hint: 'Use a long, unique password.' },
     phone: { label: 'Mobile / WhatsApp number', type: 'tel', required: true, autocomplete: 'tel', placeholder: '+880 1XXX-XXXXXX', pattern: '\\+?[0-9 \\(\\)\\-]{7,20}' }, // escaped for the `v` regex flag browsers use for pattern=
-    preferred_language: { label: 'Preferred language', type: 'select', required: true, options: [['en', 'English'], ['bn', 'বাংলা (Bangla)']], hint: 'The AI counsellor replies in this language.' },
+    preferred_language: { label: 'Preferred language', type: 'select', required: true, options: [['en', 'English'], ['bn', 'বাংলা (Bangla)']], hint: 'The AI Counsellor replies in this language.' },
 
     dateOfBirth: { label: 'Date of birth', type: 'date', autocomplete: 'bday', max: new Date().toISOString().slice(0, 10) },
     gender: { label: 'Gender', type: 'select', options: 'gender' },
@@ -422,18 +422,25 @@
     $('#profileNext').hidden = !steps.length;
     // Scores at a glance; goals, intake and destinations are on the card itself.
     const p = profile; const facts = [];
-    if (/^ielts/.test(p.englishTest || '') && p.ieltsOverall !== undefined) facts.push(['IELTS', [p.ieltsOverall, p.ieltsListening !== undefined ? `L${p.ieltsListening} R${p.ieltsReading ?? '–'} W${p.ieltsWriting ?? '–'} S${p.ieltsSpeaking ?? '–'}` : ''].filter(Boolean).join(' · ')]);
+    const band = v => (v === undefined ? '–' : Number(v).toFixed(1));
+    const gpa = v => Number(v).toFixed(2);
+    if (/^ielts/.test(p.englishTest || '') && p.ieltsOverall !== undefined) facts.push(['IELTS', [`Overall ${band(p.ieltsOverall)}`, p.ieltsListening !== undefined ? `L ${band(p.ieltsListening)} · R ${band(p.ieltsReading)} · W ${band(p.ieltsWriting)} · S ${band(p.ieltsSpeaking)}` : ''].filter(Boolean).join(' · ')]);
     if (p.englishTest === 'toefl-ibt' && p.toeflTotal !== undefined) facts.push(['TOEFL', p.toeflTotal]);
     if (p.englishTest === 'pte-academic' && p.pteOverall !== undefined) facts.push(['PTE', p.pteOverall]);
     if (p.englishTest === 'duolingo' && p.duolingoOverall !== undefined) facts.push(['Duolingo', p.duolingoOverall]);
     if (p.graduateTest === 'gre' && p.greQuant) facts.push(['GRE', `V${p.greVerbal ?? '–'} Q${p.greQuant}`]);
     if (p.graduateTest === 'gmat' && p.gmatTotal) facts.push(['GMAT', p.gmatTotal]);
     if (p.graduateTest === 'gre' && p.greQuant) facts[facts.length - 1][1] += ` · AWA ${p.greWriting ?? '–'}`;
-    if (p.sscGpa !== undefined || p.hscGpa !== undefined) facts.push(['SSC / HSC', `${p.sscGpa ?? '–'} / ${p.hscGpa ?? '–'}`]);
+    // SSC and HSC are separate certificates (Dakhil/Alim for Madrasah; Diploma for polytechnic students).
+    const secondaryName = p.secondarySystem === 'madrasah' ? 'Dakhil' : 'SSC';
+    const higherName = p.secondarySystem === 'madrasah' ? 'Alim' : p.secondarySystem === 'polytechnic' ? 'Diploma' : 'HSC';
+    if (p.sscGpa !== undefined) facts.push([secondaryName, `GPA ${gpa(p.sscGpa)} out of 5${p.sscYear ? ` (${p.sscYear})` : ''}`]);
+    if (p.hscGpa !== undefined) facts.push([higherName, `GPA ${gpa(p.hscGpa)} out of 5${p.hscYear ? ` (${p.hscYear})` : ''}`]);
     if (p.oLevelResult) facts.push(['O Level', p.oLevelResult]);
     if (p.aLevelResult) facts.push(['A Level', p.aLevelResult]);
-    if (p.bachelorCgpa !== undefined) facts.push(["Bachelor's", `${p.bachelorCgpa}${p.bachelorScale ? ` / ${p.bachelorScale}` : ''}`]);
-    if (p.masterCgpa !== undefined) facts.push(["Master's", `${p.masterCgpa}${p.masterScale ? ` / ${p.masterScale}` : ''}`]);
+    const cgpa = (v, scale, year) => `${scale === '100' ? `${v}%` : `CGPA ${gpa(v)}${scale ? ` out of ${Number(scale).toFixed(scale === '10' ? 0 : 2)}` : ''}`}${year ? ` (${year})` : ''}`;
+    if (p.bachelorCgpa !== undefined) facts.push(["Bachelor's", cgpa(p.bachelorCgpa, p.bachelorScale, p.bachelorYear)]);
+    if (p.masterCgpa !== undefined) facts.push(["Master's", cgpa(p.masterCgpa, p.masterScale, p.masterYear)]);
     $('#profileFacts').innerHTML = facts.length ? `<h4>Scores at a glance</h4>${facts.map(([k, v]) => `<div><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('')}` : '<h4>Scores at a glance</h4><div><span>Tip</span><b>Add your results and test scores below.</b></div>';
   }
   // view: which profile page to show — overview (default), account, goals, academic, tests, personal or security.

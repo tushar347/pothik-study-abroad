@@ -135,7 +135,9 @@ test('student profile validation accepts real score formats and rejects impossib
   assert.equal(ok.success, true, JSON.stringify(ok.error?.issues));
   assert.equal(ok.data.intakeYear, 2027);
   assert.equal(ok.data.unknownField, undefined);
-  assert.match(summarize(ok.data, 'Rahim Uddin'), /IELTS Academic — overall 7.5/);
+  const summary = summarize(ok.data, 'Rahim Uddin');
+  assert.match(summary, /IELTS Academic — overall 7.5/);
+  assert.match(summary, /- SSC GPA: 5 out of 5\n- HSC GPA: 4.83 out of 5/);
   assert.ok(completeness(ok.data).missing.includes('budget'));
 
   const errorsFor = input => profileSchema.safeParse(input).error?.issues.map(i => i.path[0]) || [];

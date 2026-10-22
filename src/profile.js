@@ -146,7 +146,10 @@ function summarize(p = {}, name = '') {
   add('Needs scholarship', p.needsScholarship);
   add('Current status', p.currentStatus && label('currentStatus', p.currentStatus));
   add('School system', p.secondarySystem && label('secondarySystem', p.secondarySystem));
-  add('SSC / HSC GPA', [p.sscGpa, p.hscGpa].some(filled) ? `${p.sscGpa ?? '?'} / ${p.hscGpa ?? '?'} (out of 5)` : '');
+  // SSC (or Dakhil) and HSC (or Alim / polytechnic Diploma) are separate certificates.
+  const madrasah = p.secondarySystem === 'madrasah';
+  add(madrasah ? 'Dakhil GPA' : 'SSC GPA', filled(p.sscGpa) ? `${p.sscGpa} out of 5${p.sscYear ? ` (${p.sscYear})` : ''}` : '');
+  add(madrasah ? 'Alim GPA' : p.secondarySystem === 'polytechnic' ? 'Diploma GPA' : 'HSC GPA', filled(p.hscGpa) ? `${p.hscGpa} out of 5${p.hscYear ? ` (${p.hscYear})` : ''}` : '');
   add('O / A Level', [p.oLevelResult, p.aLevelResult].filter(Boolean).join('; '));
   add("Bachelor's", p.bachelorSubject || p.bachelorCgpa ? `${p.bachelorSubject || ''}${p.bachelorInstitution ? ` at ${p.bachelorInstitution}` : ''}${p.bachelorCgpa !== undefined ? `, CGPA ${p.bachelorCgpa}${p.bachelorScale ? `/${p.bachelorScale}` : ''}` : ''}${p.bachelorYear ? ` (${p.bachelorYear})` : ''}` : '');
   add("Master's", p.masterSubject || p.masterCgpa ? `${p.masterSubject || ''}${p.masterCgpa !== undefined ? `, CGPA ${p.masterCgpa}${p.masterScale ? `/${p.masterScale}` : ''}` : ''}` : '');

@@ -558,10 +558,10 @@ ${context || 'No matching resources were retrieved from the Pothik knowledge bas
         generated = true;
       } catch (e) {
         console.error(`Tutor ${provider} error:`, e.message);
-        answer = `The AI counsellor is temporarily unavailable, so here is what the local knowledge base has instead.\n\n${localAnswer}`;
+        answer = `The AI Counsellor is temporarily unavailable, so here is what the local knowledge base has instead.\n\n${localAnswer}`;
       }
     } else {
-      answer = `${localAnswer}\n\n(AI answers are switched off. Add GEMINI_API_KEY in .env to enable the AI counsellor.)`;
+      answer = `${localAnswer}\n\n(AI answers are switched off. Add GEMINI_API_KEY in .env to enable the AI Counsellor.)`;
     }
     // Do not cache fallback answers, so a temporary outage is not repeated for two weeks.
     if (cacheable && (generated || !provider)) {
