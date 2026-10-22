@@ -73,6 +73,28 @@ async function createDatabase(databasePath = process.env.DATABASE_PATH) {
       data_json TEXT NOT NULL DEFAULT '{}',
       updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
+    CREATE TABLE IF NOT EXISTS program_requirements (
+      cache_key TEXT PRIMARY KEY,
+      university TEXT NOT NULL, program TEXT NOT NULL, degree TEXT NOT NULL,
+      data_json TEXT NOT NULL, sources_json TEXT NOT NULL DEFAULT '[]', official_verified INTEGER NOT NULL DEFAULT 0,
+      fetched_at INTEGER NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS university_catalogs (
+      cache_key TEXT PRIMARY KEY,
+      university TEXT NOT NULL,
+      programs_json TEXT NOT NULL DEFAULT '[]', sources_json TEXT NOT NULL DEFAULT '[]', mode TEXT NOT NULL DEFAULT '',
+      fetched_at INTEGER NOT NULL, last_requested_at INTEGER NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS admission_checks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      cache_key TEXT NOT NULL,
+      university TEXT NOT NULL, program TEXT NOT NULL, degree TEXT NOT NULL,
+      result_json TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(user_id, cache_key)
+    );
     CREATE TABLE IF NOT EXISTS sessions (
       token_hash TEXT PRIMARY KEY,
       user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -178,6 +200,7 @@ async function createDatabase(databasePath = process.env.DATABASE_PATH) {
   `);
   // Safe migration for databases created by an earlier version.
   try { raw.run('ALTER TABLE users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 0'); } catch (e) { if (!String(e.message).includes('duplicate column name')) throw e; }
+  try { raw.run("ALTER TABLE university_catalogs ADD COLUMN domain TEXT NOT NULL DEFAULT ''"); } catch (e) { if (!String(e.message).includes('duplicate column name')) throw e; }
   try { raw.run('ALTER TABLE users ADD COLUMN avatar_path TEXT'); } catch (e) { if (!String(e.message).includes('duplicate column name')) throw e; }
   try { raw.run('ALTER TABLE resources ADD COLUMN embedding_json TEXT'); } catch (e) { if (!String(e.message).includes('duplicate column name')) throw e; }
   // Preserve legacy rows and stop with a clear error instead of silently deleting duplicates.

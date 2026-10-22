@@ -19,6 +19,16 @@
     book: icon('<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5M8 7h7"/>'),
     lock: icon('<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>'),
     arrow: icon('<path d="M5 12h14M13 6l6 6-6 6"/>'),
+    chart: icon('<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'),
+    upload: icon('<path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/>'),
+    link: icon('<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>'),
+    refresh: icon('<path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/>'),
+    trash: icon('<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>'),
+    x: icon('<path d="M6 6l12 12M18 6 6 18"/>'),
+    alert: icon('<path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17h.01"/>'),
+    clock: icon('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
+    help: icon('<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17h.01"/>'),
+    info: icon('<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/>'),
     scan: icon('<path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><rect x="8" y="8" width="8" height="8" rx="1"/>')
   };
   let OPTS = null;
@@ -138,7 +148,7 @@
       .filter(a => f[a] !== undefined && f[a] !== false).map(a => (a === 'required' ? 'required' : `${a}="${esc(f[a])}"`)).join(' ');
     let control;
     if (f.type === 'select') control = `<select id="${id}" name="${name}" ${f.required ? 'required' : ''}><option value="">Select…</option>${optionList(f).map(([o, l]) => `<option value="${esc(o)}" ${String(v) === o ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>`;
-    else if (f.type === 'chips') control = `<div class="pf-chips" role="group" aria-labelledby="${id}">${optionList(f).map(([o, l]) => `<label class="pf-chip"><input type="checkbox" name="${name}" value="${esc(o)}" ${(v || []).includes(o) ? 'checked' : ''}><span>${esc(l)}</span></label>`).join('')}</div>`;
+    else if (f.type === 'chips') control = `<div class="pf-chips" role="group" aria-labelledby="${id}">${optionList(f).map(([o, l]) => `<label class="pf-chip"><input type="checkbox" name="${name}" value="${esc(o)}" ${(v || []).includes(o) ? 'checked' : ''}><span>${f.options === 'countries' && FLAG_CODES[o] ? flagHtml(o) : ''}${esc(l)}</span></label>`).join('')}</div>`;
     else if (f.type === 'textarea') control = `<textarea id="${id}" name="${name}" rows="3" ${attrs}>${esc(v)}</textarea>`;
     else if (f.type === 'checkbox') return `<label class="pf-field pf-full pf-check" data-item="${name}"><input type="checkbox" name="${name}" ${f.required ? 'required' : ''} ${v === true ? 'checked' : ''}><span>${esc(f.label)}</span><small class="pf-error" aria-live="polite"></small></label>`;
     else control = `<input id="${id}" name="${name}" type="${f.type}" ${f.type === 'number' ? 'inputmode="decimal"' : ''} value="${esc(v)}" ${attrs}>`;
@@ -291,6 +301,8 @@
   // Each profile page is its own view; the account menu opens them directly.
   const VIEWS = [
     { id: 'overview', title: 'Overview', heading: 'My student card', desc: 'Your Pothik student pass, profile progress and scores at a glance.', icon: 'card' },
+    { id: 'chances', title: 'Admission chances', desc: 'Check any university programme: we read its official requirements and compare them with your profile.', icon: 'chart' },
+    { id: 'documents', title: 'Upload documents', desc: 'Let the AI read your transcripts and certificates to fill in your results. Files are never stored.', icon: 'upload' },
     { id: 'account', title: 'Account details', desc: 'Your name, contact number and preferred language.', icon: 'user' },
     { id: 'goals', title: 'Study goals', desc: 'Where, what and when you want to study — this shapes every recommendation.', icon: 'target' },
     { id: 'academic', title: 'Academic background', desc: 'Your results as they appear on your certificates.', icon: 'book' },
@@ -333,6 +345,34 @@
             <div class="pf-facts" id="profileFacts"></div>
            </div>
           </section>
+          <section class="pf-view" id="pf-view-chances" role="tabpanel" aria-labelledby="pf-tab-chances" hidden>
+            <form class="admin-box pf-card" id="chanceForm" novalidate>
+              <ol class="ch-steps" aria-label="Steps"><li data-step="country">Country</li><li data-step="degree">Degree</li><li data-step="university">University</li><li data-step="program">Programme</li></ol>
+              <div class="pf-grid">
+                <label class="pf-field pf-half" data-item="country"><span class="pf-label">1 · Country <em>*</em></span><input name="country" required maxlength="60" placeholder="Search a country…"><small class="pf-hint" id="countryHint"></small><small class="pf-error"></small></label>
+                <label class="pf-field pf-half" data-item="degree"><span class="pf-label">2 · Degree level <em>*</em></span><select name="degree" required><option value="master">Master's</option><option value="phd">PhD / doctorate</option><option value="bachelor">Bachelor's</option><option value="foundation">Foundation / pathway</option><option value="diploma">Diploma</option></select><small class="pf-hint">Universities are filtered to those that offer this level.</small></label>
+                <label class="pf-field pf-half" data-item="university"><span class="pf-label">3 · University <em>*</em></span><input name="university" required minlength="2" maxlength="120" placeholder="Choose a country first" disabled><small class="pf-hint" id="universityHint" aria-live="polite"></small><small class="pf-error"></small></label>
+                <label class="pf-field pf-half" data-item="program"><span class="pf-label">4 · Programme <em>*</em></span><input name="program" required minlength="2" maxlength="160" placeholder="Choose a university first" disabled><small class="pf-hint ch-program-hint" id="programHint" aria-live="polite"></small><small class="pf-error"></small></label>
+              </div>
+              <div class="ch-submit"><button type="submit" class="button button-primary" id="chanceSubmit">${ICONS.chart}<span>Check my chances</span></button><small>The first check of a programme takes about 20–40 seconds while we read its official pages. Results are cached for 7 days.</small></div>
+              <div class="form-message" id="chanceMessage" role="status"></div>
+            </form>
+            <div class="ch-progress" id="chanceProgress" hidden aria-live="polite"><span class="ch-spinner" aria-hidden="true"></span><div><b id="chanceStep"></b><small>You can keep using Pothik — this page will update when it is ready.</small></div></div>
+            <div id="chanceResult"></div>
+            <section class="admin-box pf-card"><div class="ch-list-head"><h3>My shortlist</h3><small id="chanceCount"></small></div><div id="chanceList"></div></section>
+          </section>
+          <section class="pf-view" id="pf-view-documents" role="tabpanel" aria-labelledby="pf-tab-documents" hidden>
+            <div class="admin-box pf-card">
+              <div class="doc-privacy">${ICONS.lock}<p><b>Private by design.</b> Your file is read once by the AI to pick out your results, then discarded — Pothik never saves it. Nothing changes in your profile until you confirm. Do not upload your passport, NID or bank documents.</p></div>
+              <label class="doc-drop" id="docDrop">
+                <input type="file" id="docInput" accept="application/pdf,image/png,image/jpeg,image/webp">
+                ${ICONS.upload}<b>Choose a transcript or certificate</b><small>SSC / HSC / Dakhil / Alim certificates, O / A Level results, university transcripts, IELTS / TOEFL / PTE / Duolingo / GRE score reports · PDF, JPEG, PNG or WebP · up to 10 MB</small>
+              </label>
+              <div class="ch-progress" id="docProgress" hidden><span class="ch-spinner" aria-hidden="true"></span><div><b>Reading your document…</b><small>This usually takes 10–20 seconds.</small></div></div>
+              <div class="form-message" id="docMessage" role="status"></div>
+              <div id="docResult"></div>
+            </div>
+          </section>
           <form id="profileForm" novalidate></form>
           <section class="admin-box pf-card pf-view" id="pf-view-security" role="tabpanel" aria-labelledby="pf-tab-security" hidden><h3>Change password</h3>
             <form id="passwordForm" novalidate><div class="pf-grid">${['currentPassword', 'newPassword'].map(n => `<label class="pf-field pf-half" data-item="${n}"><span class="pf-label">${n === 'currentPassword' ? 'Current password' : 'New password'}</span><input type="password" name="${n}" required ${n === 'newPassword' ? 'minlength="12" autocomplete="new-password"' : 'autocomplete="current-password"'} maxlength="72"><small class="pf-error"></small></label>`).join('')}</div>
@@ -361,6 +401,17 @@
       if (to) { e.preventDefault(); showView(to.dataset.view); to.focus(); }
     });
     $('#profileNext').addEventListener('click', e => { const b = e.target.closest('[data-goto]'); if (b) showView(b.dataset.goto, { focusField: b.dataset.field }); });
+    $('#chanceForm').addEventListener('submit', submitChance);
+    $('#chanceForm [name=degree]').addEventListener('change', e => { e.target.dataset.touched = '1'; renderUniversityItems(); renderProgramOptions(); updateSteps(); });
+    setupChanceDropdowns();
+    $('#chanceList').addEventListener('click', onCheckAction);
+    $('#chanceResult').addEventListener('click', onCheckAction);
+    $('#docInput').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; uploadDocument(f); });
+    const drop = $('#docDrop');
+    ['dragenter', 'dragover'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add('dragging'); }));
+    ['dragleave', 'drop'].forEach(t => drop.addEventListener(t, () => drop.classList.remove('dragging')));
+    drop.addEventListener('drop', e => { e.preventDefault(); uploadDocument(e.dataTransfer.files[0]); });
+    $('#docResult').addEventListener('click', e => { if (e.target.closest('#docApply')) applyDocument(); });
   }
   function showView(id, { focusField } = {}) {
     const view = VIEWS.find(v => v.id === id) || VIEWS[0]; currentView = view.id;
@@ -370,10 +421,15 @@
     $('#profilePanel .pf-savebar').hidden = !FORM_VIEWS.has(view.id);
     $('#profilePanel').scrollTop = 0;
     const panel = $(`#pf-view-${view.id}`);
+    if (view.id === 'chances') {
+      if (!checksLoaded) loadChecks();
+      orderCountries();
+      const deg = $('#chanceForm [name=degree]'); if (!deg.dataset.touched && lastProfile.targetDegree && [...deg.options].some(o => o.value === lastProfile.targetDegree)) deg.value = lastProfile.targetDegree;
+    }
     const field = focusField && panel.querySelector(`[data-item="${CSS.escape(focusField)}"] input,[data-item="${CSS.escape(focusField)}"] select,[data-item="${CSS.escape(focusField)}"] textarea`);
     if (field) { field.focus({ preventScroll: true }); field.scrollIntoView({ block: 'center' }); }
   }
-  let lastCard = null;
+  let lastCard = null; let lastProfile = {};
   const formatDate = iso => { const d = new Date(iso); return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); };
   function englishScore(p) {
     if (/^ielts/.test(p.englishTest || '') && p.ieltsOverall !== undefined) return `IELTS ${Number(p.ieltsOverall).toFixed(1)}`;
@@ -411,7 +467,7 @@
       : `${ICONS.check}<b>Profile complete</b>`;
   }
   function renderSummary(user, profile, completeness, card = lastCard) {
-    lastCard = card;
+    lastCard = card; lastProfile = profile;
     $('#profileEyebrow').textContent = `MY PROFILE · ${user.name.toUpperCase()}`;
     renderAvatar(user); renderCard(user, profile, completeness, card);
     // Next steps: each missing detail links straight to the page where it is entered.
@@ -509,6 +565,276 @@
     } catch (err) { $('#deleteMessage').textContent = err.message; }
   }
 
+  // ---------- Admission chances ----------
+  let checks = []; let checksLoaded = false;
+  // ---------- Step-by-step picker: Country → University → Degree → Programme ----------
+  let countryBox = null; let uniBox = null; let progBox = null; let countries = []; let uniRequest = 0;
+  const initials = name => esc(String(name).split(/[\s-]+/).filter(w => w && !/^(of|the|and|for|de|di|der|du|la|le)$/i.test(w)).slice(0, 3).map(w => w[0]).join('').toUpperCase() || '?');
+  const logoHtml = (domain, name) => `<span class="cb-logo">${domain ? `<img src="/api/logos/${encodeURIComponent(domain)}" alt="" loading="lazy" width="28" height="28">` : ''}<span class="cb-initials">${initials(name)}</span></span>`;
+  const countryIcon = code => `<span class="cb-flag" aria-hidden="true">${flagHtml(String(code).toLowerCase(), code)}</span>`;
+  function updateSteps() {
+    const done = { country: Boolean(countryBox?.selected), degree: Boolean(countryBox?.selected && $('#chanceForm [name=degree]').value), university: Boolean(uniBox?.value), program: Boolean(progBox?.value) };
+    $$('#chanceForm .ch-steps li').forEach(li => { li.classList.toggle('is-done', done[li.dataset.step]); });
+  }
+  async function setupChanceDropdowns() {
+    countryBox = Combobox({ input: $('#chanceForm [name=country]'), emptyText: 'No country matches', groupOrder: ['Your preferred countries', 'All destinations'], onSelect: c => { onCountry(c); updateSteps(); } });
+    uniBox = Combobox({ input: $('#chanceForm [name=university]'), allowFree: true, freeLabel: q => `Use “${q}” (not in the list)`, groupOrder: ['Popular choices', 'All universities'], onSelect: u => { onUniversity(u); updateSteps(); } });
+    progBox = Combobox({ input: $('#chanceForm [name=program]'), allowFree: true, freeLabel: q => `Use “${q}”`, groupOrder: ['On the official website', 'Suggested by AI — not verified'], onSelect: () => updateSteps() });
+    try { countries = (await api('/api/countries')).countries; } catch { countries = []; }
+    orderCountries();
+  }
+  // The student's preferred countries (from their profile) come first.
+  function orderCountries() {
+    if (!countryBox || !countries.length) return;
+    const preferred = new Set(lastProfile.preferredCountries || []);
+    countryBox.setItems([...countries].sort((a, b) => (preferred.has(b.slug) - preferred.has(a.slug)) || a.name.localeCompare(b.name)).map(c => ({
+      value: c.slug, label: c.name, icon: countryIcon(c.code), keywords: [c.code, c.slug], group: preferred.has(c.slug) ? 'Your preferred countries' : 'All destinations'
+    })), { keepValue: true });
+    $('#countryHint').textContent = preferred.size ? 'Your preferred countries are listed first.' : '';
+  }
+  async function onCountry(c) {
+    uniBox.clear(); progBox.clear(); progBox.setItems([]); progBox.setDisabled(true, 'Choose a university first'); $('#programHint').textContent = ''; catalog = null; catalogFor = '';
+    allUniversities = [];
+    if (!c) { uniBox.setItems([]); uniBox.setDisabled(true, 'Choose a country first'); $('#universityHint').textContent = ''; return; }
+    if (c.free) { uniBox.setItems([]); uniBox.setDisabled(false, 'Type the university name'); $('#universityHint').textContent = 'Type the university name.'; return; }
+    const ticket = ++uniRequest;
+    const where = /^(United States|United Kingdom|Netherlands)$/.test(c.label) ? `the ${c.label}` : c.label;
+    uniBox.setDisabled(true, `Loading universities in ${where}…`);
+    $('#universityHint').innerHTML = `<span class="ch-spinner ch-spinner-sm" aria-hidden="true"></span> Loading universities in ${esc(where)}…`;
+    try {
+      const d = await api(`/api/universities?country=${encodeURIComponent(c.value)}`);
+      if (ticket !== uniRequest) return;
+      allUniversities = d.universities; universityWhere = where;
+      uniBox.setDisabled(false);
+      renderUniversityItems();
+      setTimeout(() => uniBox.input.focus(), 0);
+    } catch (err) { if (ticket === uniRequest) { allUniversities = []; uniBox.setItems([]); uniBox.setDisabled(false, 'Type the university name'); $('#universityHint').textContent = err.message; } }
+  }
+  // Only universities that can offer the chosen degree level. A known programme list beats the name-based guess.
+  let allUniversities = []; let universityWhere = '';
+  // Programme lists cover bachelor's and master's only (doctorates are rarely listed as programmes),
+  // so for other levels rely on the institution type.
+  const LISTED_LEVELS = ['bachelor', 'master'];
+  // No level data (e.g. an older cached response) → assume it may offer every level rather than hiding it.
+  const offers = (u, degree) => (u.programmeCounts && LISTED_LEVELS.includes(degree) ? (u.programmeCounts[degree] || 0) > 0 : (!Array.isArray(u.levels) || u.levels.includes(degree)));
+  function renderUniversityItems() {
+    if (!uniBox || !allUniversities.length) return;
+    const degree = $('#chanceForm [name=degree]').value; const label = DEGREE_LABEL[degree] || degree;
+    const fits = allUniversities.filter(u => offers(u, degree));
+    uniBox.setItems(fits.map(u => {
+      const count = u.programmeCounts?.[degree];
+      return {
+        value: u.name, label: u.name, sub: [u.abbr, u.aka, u.region, u.domain].filter(Boolean).join(' · '), icon: logoHtml(u.domain, u.name),
+        badge: count ? `${count} ${label}` : '', badgeTone: 'ok',
+        keywords: [u.abbr, u.aka, u.domain].filter(Boolean), group: u.featured ? 'Popular choices' : 'All universities', data: u
+      };
+    }), { keepValue: true });
+    // If the chosen university does not offer this level, clear it (and the programme).
+    const chosen = uniBox.selected;
+    if (chosen && !chosen.free && !fits.some(u => u.name === chosen.value)) { uniBox.clear(); onUniversity(null); toast(`${chosen.label} is not listed for ${label} programmes — please choose another university.`); }
+    const hidden = allUniversities.length - fits.length;
+    uniBox.setDisabled(false, `Search ${fits.length.toLocaleString('en')} universities in ${universityWhere}…`);
+    $('#universityHint').textContent = `${fits.length.toLocaleString('en')} universities in ${universityWhere} offer ${label} programmes${hidden ? ` (${hidden.toLocaleString('en')} hidden, e.g. ${degree === 'phd' ? 'universities of applied sciences and colleges' : 'community and technical colleges'})` : ''}. Search by name or abbreviation${allUniversities.find(u => u.abbr) ? ` (e.g. ${allUniversities.find(u => u.abbr).abbr})` : ''}.`;
+    updateSteps();
+  }
+  function onUniversity(u) {
+    progBox.clear(); catalog = null; catalogFor = '';
+    if (!u) { progBox.setItems([]); progBox.setDisabled(true, 'Choose a university first'); $('#programHint').textContent = ''; return; }
+    loadCatalog(u.value, u.data?.domain || '');
+  }
+  // Programme catalogue for the chosen university (from /api/admissions/programs, refreshed daily on the server).
+  let catalog = null; let catalogFor = ''; let catalogRequest = 0;
+  async function loadCatalog(name, domain = '') {
+    name = String(name || '').trim();
+    if (name.length < 3 || name.toLowerCase() === catalogFor.toLowerCase()) return;
+    catalogFor = name; catalog = null; const ticket = ++catalogRequest;
+    progBox.setItems([]); progBox.setDisabled(true, 'Loading programmes…');
+    $('#programHint').innerHTML = `<span class="ch-spinner ch-spinner-sm" aria-hidden="true"></span> Loading programmes at ${esc(name)} from the web… the first time can take about 30 seconds.`;
+    try {
+      const d = await api(`/api/admissions/programs?university=${encodeURIComponent(name)}${domain ? `&domain=${encodeURIComponent(domain)}` : ''}`);
+      if (ticket !== catalogRequest) return; // a newer university was chosen meanwhile
+      catalog = d; progBox.setDisabled(false, 'Search programmes…'); renderProgramOptions();
+      setTimeout(() => progBox.input.focus(), 0);
+    } catch (err) { if (ticket === catalogRequest) { progBox.setDisabled(false, 'Type the programme name'); $('#programHint').textContent = `${err.message}`; catalogFor = ''; } }
+  }
+  function renderProgramOptions() {
+    if (!catalog || !progBox) return;
+    const degree = $('#chanceForm [name=degree]').value;
+    const all = catalog.programs || [];
+    const matching = all.filter(p => p.degree === degree);
+    // Remember real counts so the university list can show / filter by them.
+    const degreeCounts = {}; all.forEach(p => { degreeCounts[p.degree] = (degreeCounts[p.degree] || 0) + 1; });
+    const uni = allUniversities.find(u => u.name === uniBox?.value); if (uni && all.length) uni.programmeCounts = degreeCounts;
+    // No programmes at the chosen level: say so plainly instead of listing other degrees.
+    if (all.length && !matching.length && degree === 'phd') {
+      progBox.setItems([], { keepValue: true });
+      $('#programHint').innerHTML = `<span class="ch-warn ch-info">${ICONS.info}<span><b>Doctorates are usually arranged with a supervisor rather than chosen from a programme list.</b> Type your research area or doctoral programme (e.g. "PhD in Informatics"), then check your chances.</span></span>`;
+      return;
+    }
+    if (all.length && !matching.length) {
+      const label = DEGREE_LABEL[degree] || degree;
+      const other = Object.entries(degreeCounts).map(([d, n]) => `${n} ${DEGREE_LABEL[d] || d}`).join(', ');
+      progBox.setItems([], { keepValue: true });
+      $('#programHint').innerHTML = `<span class="ch-warn">${ICONS.alert}<span><b>No ${esc(label)} programmes found at ${esc(catalog.university)}.</b> Its list has ${esc(other)}. Choose another university, change the degree level, or type the programme if you know it exists.</span></span>`;
+      return;
+    }
+    const shown = matching;
+    // Verified (read from the official site) first, then AI suggestions clearly marked.
+    progBox.setItems(shown.map(p => ({
+      value: p.name, label: p.name, sub: [DEGREE_LABEL[p.degree] || '', p.language].filter(Boolean).join(' · '),
+      badge: p.verified === false ? 'AI suggestion' : 'Official', badgeTone: p.verified === false ? 'warn' : 'ok',
+      group: p.verified === false ? 'Suggested by AI — not verified' : 'On the official website', keywords: [p.language]
+    })), { keepValue: true });
+    const verifiedCount = shown.filter(p => p.verified !== false).length; const suggestedCount = shown.length - verifiedCount;
+    const source = catalog.sources?.[0];
+    const where = { 'web-search': 'via Google Search', 'official-pages': 'from the official website', 'official-pages+ai': 'from the official website', 'ai-knowledge': '' }[catalog.mode] ?? '';
+    const counts = catalog.mode === 'ai-knowledge'
+      ? `${shown.length} programme${shown.length === 1 ? '' : 's'} suggested by AI (not verified — the official site could not be read)`
+      : `${verifiedCount} verified ${where}${suggestedCount ? ` + ${suggestedCount} suggested by AI (not verified)` : ''}`;
+    $('#programHint').innerHTML = all.length
+      ? `${matching.length ? `${esc(DEGREE_LABEL[degree] || degree)} programmes` : 'Programmes'} at ${esc(catalog.university)}: ${esc(counts)}. Start typing or pick from the list. Updated ${esc(formatDate(catalog.fetchedAt))}${source ? ` · <a href="${esc(source.uri)}" target="_blank" rel="noopener noreferrer">official list</a>` : ''}${catalog.refreshing ? ' · refreshing today’s list' : ''}.${!matching.length ? ` No ${esc(DEGREE_LABEL[degree] || degree)} programmes were found, so all are shown.` : ''}`
+      : `No programme list found for ${esc(catalog.university)} — type the programme name instead.`;
+  }
+  const BAND_CLASS = { Strong: 'strong', Possible: 'possible', Reach: 'reach', Unlikely: 'unlikely', 'Not yet eligible': 'pending' };
+  const BAND_ORDER = ['Strong', 'Possible', 'Reach', 'Not yet eligible', 'Unlikely'];
+  const STATUS_ICON = { meets: ['check', 'ok', 'Meets'], above: ['check', 'ok', 'Above'], below: ['x', 'bad', 'Below'], missing: ['alert', 'warn', 'Missing'], pending: ['clock', 'warn', 'Pending'], unknown: ['help', 'muted', 'Unknown'], caution: ['alert', 'warn', 'Note'], info: ['info', 'muted', 'Info'] };
+  const MODE_LABEL = { 'web-search': ['ok', 'Checked with Google Search'], 'official-pages': ['ok', "Read from the university's official pages"], 'ai-knowledge': ['warn', 'Not verified — AI general knowledge only'] };
+  const DEGREE_LABEL = { master: "Master's", phd: 'PhD', bachelor: "Bachelor's", foundation: 'Foundation', diploma: 'Diploma' };
+  const STEPS_TEXT = ['Finding the official programme pages…', 'Reading the admission requirements…', 'Comparing them with your profile…', 'Writing your personal summary…'];
+  const bandChip = a => `<span class="ch-band ch-band-${BAND_CLASS[a.band] || 'pending'}">${esc(a.band)}</span>`;
+  function nextDeadline(req) {
+    const today = new Date().toISOString().slice(0, 10);
+    const d = (req.deadlines || []).filter(x => x.date && x.date >= today).sort((a, b) => a.date.localeCompare(b.date))[0];
+    return d ? `${formatDate(d.date)}${d.intake ? ` · ${d.intake}` : ''}` : '';
+  }
+  async function loadChecks() {
+    try { checks = (await api('/api/admissions')).checks; checksLoaded = true; renderChecks(); }
+    catch (e) { $('#chanceList').innerHTML = `<p class="ch-empty">${esc(e.message)}</p>`; }
+  }
+  function renderChecks() {
+    $('#chanceCount').textContent = checks.length ? `${checks.length} programme${checks.length === 1 ? '' : 's'}` : '';
+    if (!checks.length) { $('#chanceList').innerHTML = '<p class="ch-empty">No programmes checked yet. Search for one above — every result is saved here so you can compare them.</p>'; return; }
+    const sorted = [...checks].sort((a, b) => BAND_ORDER.indexOf(a.assessment.band) - BAND_ORDER.indexOf(b.assessment.band));
+    $('#chanceList').innerHTML = `<table class="ch-table"><thead><tr><th>Programme</th><th>Chance</th><th>Next deadline</th><th>Checked</th><th><span class="sr-only">Actions</span></th></tr></thead><tbody>${sorted.map(c => `<tr>
+      <td data-label="Programme"><b>${esc(c.university)}</b><small>${esc(c.program)} · ${esc(DEGREE_LABEL[c.degree] || c.degree)}</small></td>
+      <td data-label="Chance">${bandChip(c.assessment)}<small>${esc(c.assessment.potential ? `then ${c.assessment.potential.band.toLowerCase()} (${c.assessment.potential.range})` : c.assessment.range)}</small></td>
+      <td data-label="Next deadline">${esc(nextDeadline(c.requirements) || '—')}</td>
+      <td data-label="Checked">${esc(formatDate(c.fetchedAt))}</td>
+      <td class="ch-row-actions"><button type="button" class="text-link" data-view-check="${c.id}">View</button><button type="button" class="icon-button" data-recheck="${c.id}" title="Re-check from the web" aria-label="Re-check ${esc(c.university)}">${ICONS.refresh}</button><button type="button" class="icon-button" data-remove-check="${c.id}" title="Remove from shortlist" aria-label="Remove ${esc(c.university)}">${ICONS.trash}</button></td>
+    </tr>`).join('')}</tbody></table>`;
+  }
+  function requirementRows(r, a) {
+    const ac = r.academic || {}; const en = r.english || {};
+    const grade = ac.german_grade_max ? `German grade ${ac.german_grade_max} or better` : ac.min_gpa ? `${ac.min_gpa}${ac.gpa_scale ? ` out of ${ac.gpa_scale}` : ''}` : ac.min_percentage ? `${ac.min_percentage}%` : '';
+    const english = [en.ielts_overall && `IELTS ${en.ielts_overall}${en.ielts_min_band ? ` (each section ${en.ielts_min_band}+)` : ''}`, en.toefl_ibt && `TOEFL iBT ${en.toefl_ibt}`, en.pte && `PTE ${en.pte}`, en.duolingo && `Duolingo ${en.duolingo}`, en.moi_accepted === true && 'MOI letter accepted', en.moi_accepted === false && 'MOI letter not accepted'].filter(Boolean).join(' · ');
+    const testText = (name, g) => g?.status && g.status !== 'unknown' ? `${name} ${g.status.replace('_', ' ')}${[g.min_quant && `Quant ${g.min_quant}+`, g.min_verbal && `Verbal ${g.min_verbal}+`, g.min_writing && `Writing ${g.min_writing}+`].filter(Boolean).map((t, i) => `${i ? ', ' : ' — '}${t}`).join('')}` : '';
+    const tuition = r.tuition?.amount ? `${Number(r.tuition.amount).toLocaleString('en')} ${r.tuition.currency || ''}${r.tuition.period ? ` ${/^per /.test(r.tuition.period) ? r.tuition.period : `per ${r.tuition.period}`}` : ''}` : '';
+    const rows = [
+      ['Minimum grade', grade, ac.notes, a.germanEquivalent ? `Your result ≈ German grade ${a.germanEquivalent} (Modified Bavarian formula)` : ''],
+      ['English', english, en.notes],
+      ['GRE / GMAT', [testText('GRE', r.gre), testText('GMAT', r.gmat)].filter(Boolean).join(' · '), [r.gre?.notes, r.gmat?.notes].filter(Boolean).join(' ')],
+      ['Work experience', r.work_experience_months ? `${r.work_experience_months} months` : ''],
+      ['Deadlines', (r.deadlines || []).filter(d => d.date || d.label).map(d => `${d.intake ? `${d.intake}: ` : ''}${d.date ? formatDate(d.date) : ''}${d.label ? ` (${d.label})` : ''}`).join('\n')],
+      ['Tuition', tuition, r.tuition?.notes],
+      ['Apply via', r.application_portal],
+      ['Teaching language', r.language_of_instruction],
+      ['Other requirements', (r.other_requirements || []).join('\n')]
+    ];
+    return rows.filter(([, v, n]) => v || n).map(([k, v, n, hint]) => `<div><dt>${esc(k)}</dt><dd>${v ? `<b>${esc(v)}</b>` : '<span class="id-empty">Not published</span>'}${n ? `<small>${esc(n)}</small>` : ''}${hint ? `<small class="ch-hint">${esc(hint)}</small>` : ''}</dd></div>`).join('');
+  }
+  function renderResult(c) {
+    const a = c.assessment; const r = c.requirements; const mode = MODE_LABEL[r.research_mode] || MODE_LABEL['official-pages'];
+    const stale = c.summaryAssessment && c.summaryAssessment !== a.band;
+    $('#chanceResult').innerHTML = `<article class="admin-box pf-card ch-result" aria-label="Admission estimate for ${esc(c.university)}">
+      <header class="ch-head"><div><div class="ch-eyebrow">${esc(DEGREE_LABEL[c.degree] || c.degree)}${r.country ? ` · ${esc(r.country)}` : ''}${r.city ? ` · ${esc(r.city)}` : ''}</div><h3>${esc(c.university)}</h3><p>${esc(c.program)}</p></div>
+        <div class="ch-head-actions">${r.official_url ? `<a class="button pf-back" href="${esc(r.official_url)}" target="_blank" rel="noopener noreferrer">${ICONS.link}<span>Official page</span></a>` : ''}<button type="button" class="button pf-back" data-recheck="${c.id}">${ICONS.refresh}<span>Re-check</span></button></div></header>
+      <div class="ch-meta"><span class="ch-mode ch-mode-${mode[0]}">${ICONS[mode[0] === 'ok' ? 'check' : 'alert']}${esc(mode[1])}</span><span>Requirements checked ${esc(formatDate(c.fetchedAt))}</span><span>Confidence: ${esc(a.confidence)}</span></div>
+      <div class="ch-verdict ch-verdict-${BAND_CLASS[a.band] || 'pending'}"><div class="ch-verdict-main"><span>Estimated chance</span><b>${esc(a.band)}</b><em>${esc(a.range)}</em></div>${a.potential ? `<div class="ch-potential"><span>${esc(a.potential.label)}</span><b>${esc(a.potential.band)}</b><em>${esc(a.potential.range)}</em></div>` : ''}</div>
+      <div class="ch-cols">
+        <section><h4>How you compare</h4><ul class="ch-factors">${a.factors.map(f => { const [ic, tone, word] = STATUS_ICON[f.status] || STATUS_ICON.info; return `<li class="ch-f-${tone}"><span class="ch-f-icon" title="${word}">${ICONS[ic]}</span><div><b>${esc(f.label)}</b><p>${esc(f.detail)}</p></div></li>`; }).join('')}</ul></section>
+        <section><h4>What to do next</h4>${a.actions.length ? `<ol class="ch-actions">${a.actions.map(x => `<li>${esc(x)}</li>`).join('')}</ol>` : '<p class="ch-empty">You meet everything we could check. Prepare a strong statement of purpose and references, and apply before the deadline.</p>'}</section>
+      </div>
+      <section><h4>Requirements</h4><dl class="ch-req">${requirementRows(r, a)}</dl></section>
+      ${c.summary ? `<section class="ch-summary"><h4>Counsellor summary</h4><div id="chanceSummary"></div>${stale ? '<p class="ch-stale">Your profile has changed since this summary was written. Re-check for an updated summary — the estimate above is already up to date.</p>' : ''}</section>` : ''}
+      <section><h4>Sources</h4>${c.sources?.length ? `<ul class="ch-sources">${c.sources.map(s => `<li><a href="${esc(s.uri)}" target="_blank" rel="noopener noreferrer">${ICONS.link}${esc(s.title || s.uri)}</a></li>`).join('')}</ul>` : '<p class="ch-empty">No web sources were available for this check — confirm everything on the official page.</p>'}</section>
+      <p class="ch-disclaimer">This is an estimate from the programme's published requirements and your self-reported profile. It is not an admission decision and is not based on historical admission data. Always confirm requirements on the official page before applying.</p>
+    </article>`;
+    if (c.summary) renderRichText($('#chanceSummary'), c.summary);
+  }
+  async function runCheck(body) {
+    const button = $('#chanceSubmit'); button.disabled = true; $('#chanceMessage').textContent = '';
+    let i = 0; $('#chanceStep').textContent = STEPS_TEXT[0]; $('#chanceProgress').hidden = false;
+    const timer = setInterval(() => { i = Math.min(i + 1, STEPS_TEXT.length - 1); $('#chanceStep').textContent = STEPS_TEXT[i]; }, 7000);
+    try {
+      const d = await api('/api/admissions/check', { method: 'POST', body: JSON.stringify(body) });
+      if (d.notFound) { $('#chanceMessage').textContent = d.message; return; }
+      checks = [d, ...checks.filter(c => c.id !== d.id)]; checksLoaded = true;
+      renderChecks(); renderResult(d); $('#chanceResult').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (err) { $('#chanceMessage').textContent = err.message; showErrors($('#chanceForm'), err.data?.fieldErrors); }
+    finally { clearInterval(timer); $('#chanceProgress').hidden = true; button.disabled = false; }
+  }
+  function submitChance(e) {
+    e.preventDefault(); const form = e.currentTarget; clearErrors(form);
+    // Steps are filled in order; point to the first one that is missing.
+    const missing = !countryBox?.value ? ['country', 'Choose a country'] : !uniBox?.value ? ['university', 'Choose or type a university'] : !progBox?.value ? ['program', 'Choose or type a programme'] : null;
+    if (missing) { showErrors(form, { [missing[0]]: missing[1] }); form.querySelector(`[name=${missing[0]}]`).focus(); return; }
+    if (!validate(form)) return;
+    const country = countryBox.selected?.free ? countryBox.value : (countries.find(c => c.slug === countryBox.value)?.name || countryBox.value);
+    runCheck({ university: uniBox.value, program: progBox.value, degree: form.degree.value, country });
+  }
+  async function onCheckAction(e) {
+    const view = e.target.closest('[data-view-check]'); const recheck = e.target.closest('[data-recheck]'); const remove = e.target.closest('[data-remove-check]');
+    const find = id => checks.find(c => String(c.id) === String(id));
+    if (view) { renderResult(find(view.dataset.viewCheck)); $('#chanceResult').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    if (recheck) { const c = find(recheck.dataset.recheck); if (c) runCheck({ ...c.query, refresh: true }); }
+    if (remove) {
+      const c = find(remove.dataset.removeCheck); if (!c || !confirm(`Remove ${c.university} — ${c.program} from your shortlist?`)) return;
+      try { await api(`/api/admissions/${c.id}`, { method: 'DELETE' }); checks = checks.filter(x => x.id !== c.id); renderChecks(); if ($('#chanceResult .ch-result') && $('#chanceResult [data-recheck]')?.dataset.recheck === String(c.id)) $('#chanceResult').innerHTML = ''; }
+      catch (err) { toast(err.message); }
+    }
+  }
+
+  // ---------- Document reading ----------
+  const DOC_LABEL = { ssc: 'SSC certificate', hsc: 'HSC certificate', dakhil: 'Dakhil certificate', alim: 'Alim certificate', diploma: 'Polytechnic diploma', o_level: 'O Level results', a_level: 'A Level results', bachelor_transcript: "Bachelor's transcript", master_transcript: "Master's transcript", ielts: 'IELTS test report', toefl: 'TOEFL score report', pte: 'PTE score report', duolingo: 'Duolingo results', gre: 'GRE score report', gmat: 'GMAT score report', other: 'Document' };
+  let docSuggestions = {};
+  const displayValue = (k, v) => {
+    if (v === undefined || v === null || v === '') return '';
+    const f = FIELDS[k]; if (f?.type === 'select') return optionList(f).find(([o]) => o === String(v))?.[1] || String(v);
+    return Array.isArray(v) ? v.join(', ') : String(v);
+  };
+  async function uploadDocument(file) {
+    if (!file) return;
+    $('#docMessage').textContent = ''; $('#docResult').innerHTML = '';
+    if (!['application/pdf', 'image/png', 'image/jpeg', 'image/webp'].includes(file.type)) { $('#docMessage').textContent = 'Upload a PDF, JPEG, PNG or WebP file.'; return; }
+    if (file.size > 10 * 1024 * 1024) { $('#docMessage').textContent = 'The file must be under 10 MB.'; return; }
+    const fd = new FormData(); fd.append('document', file);
+    $('#docProgress').hidden = false;
+    try { renderDocResult(await api('/api/documents/read', { method: 'POST', body: fd })); }
+    catch (err) { $('#docMessage').textContent = err.message; }
+    finally { $('#docProgress').hidden = true; }
+  }
+  function renderDocResult(d) {
+    docSuggestions = d.suggestions || {};
+    const doc = d.document || {}; const keys = Object.keys(docSuggestions);
+    $('#docResult').innerHTML = `<div class="doc-found"><div class="doc-found-head">${ICONS.check}<div><b>${esc(DOC_LABEL[doc.document_type] || 'Document')}${doc.institution ? ` — ${esc(doc.institution)}` : ''}</b><small>${esc(d.message || '')}${doc.confidence ? ` Reading confidence: ${esc(doc.confidence)}.` : ''}</small></div></div>
+      ${d.nameWarning ? `<p class="doc-warning">${ICONS.alert}${esc(d.nameWarning)}</p>` : ''}
+      ${doc.notes ? `<p class="doc-note">${esc(doc.notes)}</p>` : ''}
+      ${keys.length ? `<p class="doc-instruct">Tick the results to add to your profile. Check each value against your document first.</p>
+      <table class="ch-table doc-table"><thead><tr><th><span class="sr-only">Apply</span></th><th>Field</th><th>Currently in profile</th><th>Found in document</th></tr></thead><tbody>${keys.map(k => `<tr><td><input type="checkbox" data-doc-key="${esc(k)}" checked aria-label="Apply ${esc(FIELDS[k]?.label || k)}"></td><td data-label="Field">${esc(FIELDS[k]?.label || k)}</td><td data-label="Currently">${esc(displayValue(k, lastProfile[k])) || '<span class="id-empty">Empty</span>'}</td><td data-label="Found"><b>${esc(displayValue(k, docSuggestions[k]))}</b></td></tr>`).join('')}</tbody></table>
+      <button type="button" class="button button-primary" id="docApply">${ICONS.check}<span>Add selected to my profile</span></button>` : '<p class="ch-empty">We could not find results to add from this document. Try a clearer scan, or enter your results on the Academic background or Test scores page.</p>'}</div>`;
+  }
+  async function applyDocument() {
+    if (dirty) { $('#docMessage').textContent = 'Save or discard your unsaved profile changes first.'; return; }
+    const chosen = {}; $$('#docResult [data-doc-key]:checked').forEach(cb => { chosen[cb.dataset.docKey] = docSuggestions[cb.dataset.docKey]; });
+    if (!Object.keys(chosen).length) { $('#docMessage').textContent = 'Tick at least one result to add.'; return; }
+    try {
+      await api('/api/profile', { method: 'PUT', body: JSON.stringify({ name: state.user.name, preferred_language: state.user.preferred_language || 'en', profile: { ...lastProfile, ...chosen } }) });
+      await openProfile('documents');
+      $('#docResult').innerHTML = ''; $('#docMessage').textContent = `Added ${Object.keys(chosen).length} result${Object.keys(chosen).length === 1 ? '' : 's'} to your profile. Your admission estimates update automatically.`;
+      checksLoaded = false; toast('Profile updated from your document.');
+    } catch (err) { $('#docMessage').textContent = err.message; }
+  }
+
   // ---------- Profile photo: zoom / reposition, then upload a 512px square ----------
   function renderAvatar(user) {
     const el = $('#profileAvatar'); const letter = user.name.trim()[0]?.toUpperCase() || 'P';
@@ -599,6 +925,9 @@
 
   document.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
+    // Let a searchable dropdown handle Esc first (close its list, then clear it).
+    const t = e.target;
+    if (t?.getAttribute?.('role') === 'combobox' && (t.getAttribute('aria-expanded') === 'true' || t.value)) return;
     // Close only the top-most layer: the photo editor sits above the profile page.
     if ($('#cropModal') && !$('#cropModal').hidden) { closeCropper(); e.stopImmediatePropagation(); return; }
     closeSignup(); closeProfile();

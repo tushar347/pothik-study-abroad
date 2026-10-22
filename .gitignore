@@ -8,6 +8,8 @@ data/*.wasm
 data/*.bak
 data/*.sqlite-*
 data/avatars/
+data/logos/
+data/universities.json*
 public/uploads/*
 !public/uploads/.gitkeep
 npm-debug.log*

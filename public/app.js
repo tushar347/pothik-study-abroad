@@ -2,6 +2,12 @@ const $ = (s, root = document) => root.querySelector(s);
 const $$ = (s, root = document) => [...root.querySelectorAll(s)];
 const state = { user: null, site: null, countries: [], resources: [], ieltsResources: [], programs: [], scholarships: [], opportunities: [], exercises: [], roadmaps: [], selectedCountry: 'germany', skill: 'All', authMode: 'login', chatBusy: false, chatHistory: [], adminContent: null };
 const esc = (v = '') => String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+// Country flags as SVG images (flag-icons, MIT) — Windows does not draw flag emoji.
+const FLAG_CODES = { germany: 'de', canada: 'ca', usa: 'us', uk: 'gb', australia: 'au', ireland: 'ie', netherlands: 'nl', sweden: 'se', finland: 'fi', france: 'fr', italy: 'it', hungary: 'hu', japan: 'jp', 'south-korea': 'kr', malaysia: 'my', 'new-zealand': 'nz', china: 'cn', bangladesh: 'bd' };
+function flagHtml(slugOrCode, fallback = '') {
+  const code = FLAG_CODES[slugOrCode] || (/^[a-z]{2}$/i.test(slugOrCode || '') && Object.values(FLAG_CODES).includes(String(slugOrCode).toLowerCase()) ? String(slugOrCode).toLowerCase() : '');
+  return code ? `<img class="flag-img" src="/assets/flags/${code}.svg" alt="" width="20" height="15">` : esc(fallback);
+}
 function toast(message) { const t = $('#toast'); t.textContent = message; t.classList.add('show'); clearTimeout(window._toastTimer); window._toastTimer = setTimeout(() => t.classList.remove('show'), 3500); }
 async function api(url, options = {}) {
   const headers = { ...(options.headers || {}) };
@@ -48,9 +54,9 @@ function applyBrand() {
 }
 function renderCountryTabs() {
   const countries = state.site?.countries || [];
-  $('#countryTabs').innerHTML = countries.map((c, i) => `<button type="button" class="country-tab ${c.slug === state.selectedCountry ? 'active' : ''}" role="tab" aria-selected="${c.slug === state.selectedCountry}" data-country-tab="${esc(c.slug)}"><span class="flag">${esc(c.flag || '')}</span>${esc(c.name)}</button>`).join('');
+  $('#countryTabs').innerHTML = countries.map((c, i) => `<button type="button" class="country-tab ${c.slug === state.selectedCountry ? 'active' : ''}" role="tab" aria-selected="${c.slug === state.selectedCountry}" data-country-tab="${esc(c.slug)}"><span class="flag">${flagHtml(c.slug, c.flag || '')}</span>${esc(c.name)}</button>`).join('');
   $('#countryTabs').querySelectorAll('[data-country-tab]').forEach(btn => btn.addEventListener('click', () => selectCountry(btn.dataset.countryTab)));
-  $('#countryMiniGrid').innerHTML = countries.map((c, i) => `<button type="button" class="country-mini ${c.slug === state.selectedCountry ? 'active' : ''}" data-country-mini="${esc(c.slug)}" aria-label="Explore ${esc(c.name)}"><img src="${esc(c.image)}" alt="${esc(c.imageAlt || c.name)}" loading="lazy"><span class="country-mini-meta"><span class="flag">${esc(c.flag || '')}</span><b>${esc(c.name)}</b></span></button>`).join('');
+  $('#countryMiniGrid').innerHTML = countries.map((c, i) => `<button type="button" class="country-mini ${c.slug === state.selectedCountry ? 'active' : ''}" data-country-mini="${esc(c.slug)}" aria-label="Explore ${esc(c.name)}"><img src="${esc(c.image)}" alt="${esc(c.imageAlt || c.name)}" loading="lazy"><span class="country-mini-meta"><span class="flag">${flagHtml(c.slug, c.flag || '')}</span><b>${esc(c.name)}</b></span></button>`).join('');
   $('#countryMiniGrid').querySelectorAll('[data-country-mini]').forEach(btn => btn.addEventListener('click', () => selectCountry(btn.dataset.countryMini)));
   const select = $('#roadCountry'); if (select) select.innerHTML = countries.map(c => `<option value="${esc(c.slug)}">${esc(c.name)}</option>`).join('');
   renderSelectedCountry();
@@ -60,7 +66,7 @@ function renderSelectedCountry() {
   const c = currentCountry(); if (!c) return;
   const idx = state.site.countries.findIndex(x => x.slug === c.slug) + 1;
   $('#countryFeatureImage').src = c.image; $('#countryFeatureImage').alt = c.imageAlt || `${c.name} study destination`;
-  setText('#countryFeatureFlag', c.flag); setText('#countryFeatureName', c.name); setText('#countryTitle', `Study in ${c.name}`);
+  const featureFlag = $('#countryFeatureFlag'); if (featureFlag) featureFlag.innerHTML = flagHtml(c.slug, c.flag || ''); setText('#countryFeatureName', c.name); setText('#countryTitle', `Study in ${c.name}`);
   setText('#countryKicker', `${c.name.toUpperCase()} · DESTINATION GUIDE`); setText('#countrySummary', c.summary);
   setText('#countryTuition', c.tuition || 'Varies by programme and institution'); setText('#countryLanguage', c.language || 'Check programme language requirements');
   setText('#countryLiving', c.living || 'Check current official cost and visa guidance.');
@@ -68,7 +74,7 @@ function renderSelectedCountry() {
   const official = $('#countryOfficial'); official.href = c.officialUrl || '#'; official.textContent = `Official ${c.name} study portal ↗`;
   $('#countryTabs').querySelectorAll('[data-country-tab]').forEach(b => { const active = b.dataset.countryTab === c.slug; b.classList.toggle('active', active); b.setAttribute('aria-selected', String(active)); });
   $('#countryMiniGrid').querySelectorAll('[data-country-mini]').forEach(b => b.classList.toggle('active', b.dataset.countryMini === c.slug));
-  setText('#heroCountryFlag', c.flag); setText('#heroPhotoTitle', `Explore ${c.name}`); setText('#heroPhotoSub', 'Your next chapter starts here');
+  const heroFlag = $('#heroCountryFlag'); if (heroFlag) heroFlag.innerHTML = flagHtml(c.slug, c.flag || ''); setText('#heroPhotoTitle', `Explore ${c.name}`); setText('#heroPhotoSub', 'Your next chapter starts here');
 }
 function renderIeltsCards() {
   const skills = state.site?.ielts || [];
@@ -136,7 +142,7 @@ function renderOpportunities() {
   const rows = state.opportunities.filter(o => (!country || normalizeCountrySlug(o.country_slug || o.country_name) === country) && (!status || o.status === status) && (`${o.title} ${o.provider} ${o.summary} ${o.country_name}`.toLowerCase().includes(q)));
   const labels = { upcoming:'Upcoming deadline', open:'Open', 'check-source':'Check official source', 'needs-review':'New candidate · review needed', closed:'Closed · monitor next cycle' };
   $('#opportunityGrid').innerHTML = rows.map(o => { const c = state.site?.countries?.find(x => x.slug === o.country_slug); const date = o.deadline_date ? new Date(`${o.deadline_date}T12:00:00`).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : '';
-    return `<article class="opportunity-card"><div class="opportunity-card-top"><span class="opportunity-country">${esc(c?.flag || '')} ${esc(o.country_name)}</span><span class="opportunity-status status-${esc(o.status)}">${esc(labels[o.status] || o.status)}</span></div><div class="opportunity-provider">${esc(o.provider)}</div><h3>${esc(o.title)}</h3><p>${esc(o.summary)}</p><div class="opportunity-deadline"><span>Deadline / status</span><b>${esc(date || o.deadline_label || 'Check official source')}</b></div>${o.review_required ? '<div class="review-warning">Automatically discovered link — review required before publication.</div>' : ''}<div class="opportunity-card-foot"><small>${o.source_checked_at ? `Source checked ${esc(new Date(o.source_checked_at).toLocaleDateString('en-GB'))}` : 'Current call must be verified'}</small><a href="${esc(o.official_url)}" target="_blank" rel="noopener noreferrer">Official details ↗</a></div></article>`;
+    return `<article class="opportunity-card"><div class="opportunity-card-top"><span class="opportunity-country">${flagHtml(o.country_slug, c?.flag || '')} ${esc(o.country_name)}</span><span class="opportunity-status status-${esc(o.status)}">${esc(labels[o.status] || o.status)}</span></div><div class="opportunity-provider">${esc(o.provider)}</div><h3>${esc(o.title)}</h3><p>${esc(o.summary)}</p><div class="opportunity-deadline"><span>Deadline / status</span><b>${esc(date || o.deadline_label || 'Check official source')}</b></div>${o.review_required ? '<div class="review-warning">Automatically discovered link — review required before publication.</div>' : ''}<div class="opportunity-card-foot"><small>${o.source_checked_at ? `Source checked ${esc(new Date(o.source_checked_at).toLocaleDateString('en-GB'))}` : 'Current call must be verified'}</small><a href="${esc(o.official_url)}" target="_blank" rel="noopener noreferrer">Official details ↗</a></div></article>`;
   }).join('') || `<div class="empty-state"><strong>No opportunities match these filters.</strong><br>Try another destination or status. If you expected results, choose All destinations and refresh the page; official source links are listed below.</div>`;
   setText('#opportunitySummary', `${rows.length} opportunities or official monitoring links · ${state.opportunities.filter(x => x.status === 'upcoming' || x.status === 'open').length} with a published future/open status`);
   const dates = state.opportunities.map(x => x.source_checked_at).filter(Boolean).sort(); setText('#opportunityLastChecked', dates.length ? `Latest source check: ${new Date(dates[dates.length - 1]).toLocaleDateString('en-GB')}` : 'No successful source check recorded yet · official links remain available');
@@ -297,6 +303,8 @@ async function submitTutor(e) {
 const menuIcon = d => `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
 const ACCOUNT_ITEMS = [
   { id: 'profile', label: 'My profile & student card', icon: '<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>', run: () => openProfile() },
+  { id: 'chances', label: 'Admission chances', icon: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>', run: () => openProfile('chances') },
+  { id: 'documents', label: 'Upload transcripts', icon: '<path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/>', run: () => openProfile('documents') },
   { id: 'goals', label: 'Study goals', icon: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>', run: () => openProfile('goals') },
   { id: 'academic', label: 'Academic background', icon: '<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5M8 7h7"/>', run: () => openProfile('academic') },
   { id: 'tests', label: 'Test scores', icon: '<path d="m2 9 10-5 10 5-10 5z"/><path d="M6 11v5c3 2 9 2 12 0v-5"/>', run: () => openProfile('tests') },

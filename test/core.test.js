@@ -152,6 +152,94 @@ test('student profile validation accepts real score formats and rejects impossib
   assert.deepEqual(errorsFor({ preferredCountries: ['atlantis'] }), ['preferredCountries']);
 });
 
+test('admission estimate separates eligibility from chance and compares minimums', () => {
+  const { assessChances, germanGrade } = require('../src/admissions');
+  const tum = { academic: {}, english: {}, gre: { status: 'required', min_quant: 164, min_writing: 4 }, selectivity: 'very_high' };
+  const base = { bachelorCgpa: 3.3, bachelorScale: '4', englishTest: 'ielts-academic', ieltsOverall: 7.5 };
+
+  const noGre = assessChances(base, tum, 'master');
+  assert.equal(noGre.eligibility, 'missing-requirements');
+  assert.equal(noGre.band, 'Not yet eligible');
+  assert.deepEqual(noGre.missing, ['GRE']);
+  assert.ok(noGre.potential?.band);
+
+  assert.equal(assessChances({ ...base, graduateTest: 'gre', greQuant: 166, greWriting: 4.5 }, tum, 'master').eligibility, 'eligible');
+  const low = assessChances({ ...base, graduateTest: 'gre', greQuant: 160, greWriting: 3.5 }, tum, 'master');
+  assert.equal(low.eligibility, 'below-minimum');
+  assert.equal(low.band, 'Unlikely');
+
+  // A strong student against a moderate programme with published minimums.
+  const moderate = { academic: { min_gpa: 3.0, gpa_scale: 4 }, english: { ielts_overall: 6.5 }, gre: { status: 'not_required' }, selectivity: 'moderate' };
+  const strong = assessChances({ ...base, bachelorCgpa: 3.8, ieltsListening: 7, ieltsReading: 7, ieltsWriting: 7, ieltsSpeaking: 7 }, moderate, 'master');
+  assert.equal(strong.eligibility, 'eligible');
+  assert.equal(strong.band, 'Strong');
+  assert.equal(assessChances({ ...base, bachelorCgpa: 2.6 }, moderate, 'master').band, 'Unlikely');
+  assert.equal(assessChances({ ...base, ieltsOverall: 6.0 }, moderate, 'master').eligibility, 'below-minimum');
+
+  // Modified Bavarian formula on the 4.00 scale with 2.00 as pass: 3.5 → 1.75, 4.0 → 1.0.
+  assert.equal(germanGrade(3.5, 4), 1.75);
+  assert.equal(germanGrade(4, 4), 1);
+});
+
+test('admissions helpers block private addresses and parse model replies leniently', () => {
+  const { isPrivateAddress, requirementSchema, suggestionsFrom, docSchema } = require('../src/admissions');
+  const ai = require('../src/ai');
+  for (const ip of ['127.0.0.1', '10.0.0.5', '192.168.1.1', '172.20.0.1', '169.254.169.254', '::1', 'fd00::1', '::ffff:127.0.0.1']) assert.equal(isPrivateAddress(ip), true, ip);
+  for (const ip of ['8.8.8.8', '129.187.255.109', '2a00:1450:4001::200e']) assert.equal(isPrivateAddress(ip), false, ip);
+
+  assert.deepEqual(ai.parseJson('Here you go:\n```json\n{"a":1}\n```'), { a: 1 });
+  const req = requirementSchema.parse({ academic: { min_gpa: '3.0 out of 4', gpa_scale: 'N/A' }, english: { ielts_overall: '6.5' }, selectivity: 'extreme', deadlines: 'soon' });
+  assert.equal(req.academic.min_gpa, 3);
+  assert.equal(req.academic.gpa_scale, null);
+  assert.equal(req.english.ielts_overall, 6.5);
+  assert.equal(req.selectivity, 'unknown');
+  assert.deepEqual(req.deadlines, []);
+
+  const hsc = suggestionsFrom(docSchema.parse({ document_type: 'alim', gpa: 4.92, gpa_scale: 5, year: 2019 }));
+  assert.deepEqual(hsc, { hscGpa: 4.92, hscYear: 2019, secondarySystem: 'madrasah' });
+  const ielts = suggestionsFrom(docSchema.parse({ document_type: 'ielts', ielts: { overall: 7.5, listening: 8, reading: 7.5, writing: 6.5, speaking: 7, module: 'Academic', test_date: '2026-09-12' } }));
+  assert.equal(ielts.englishTest, 'ielts-academic');
+  assert.equal(ielts.ieltsWriting, 6.5);
+  // Invalid values (e.g. an impossible IELTS band) are dropped, not saved.
+  assert.equal(suggestionsFrom(docSchema.parse({ document_type: 'ielts', ielts: { overall: 7.3 } })).ieltsOverall, undefined);
+});
+
+test('university names map to the degree levels they can usually award', () => {
+  const { levelsFor } = require('../src/universities');
+  assert.ok(!levelsFor('Massachusetts Bay Community College').includes('master'));
+  assert.ok(!levelsFor('Lehigh Carbon Community College').includes('phd'));
+  assert.ok(!levelsFor('Maricopa Community Colleges').includes('master'));
+  assert.ok(!levelsFor('University of Arkansas Community College-Hope').includes('master'));
+  const uas = levelsFor('Hochschule München University of Applied Sciences');
+  assert.ok(uas.includes('master') && !uas.includes('phd'));
+  assert.ok(!levelsFor('Fachhochschule Aachen').includes('phd'));
+  // Real universities keep every level, even when "college" or "polytechnic" appears in the name.
+  for (const name of ['Technische Universität München', 'Imperial College London', 'Boston College', 'Rensselaer Polytechnic Institute', 'Hong Kong Polytechnic University']) {
+    assert.ok(levelsFor(name).includes('phd'), name);
+  }
+});
+
+test('programme lists are built from official listing links, ignoring navigation and footers', () => {
+  const { programmesFromLinks, cleanProgrammeName, degreeOf } = require('../src/admissions');
+  const chrome = Array.from({ length: 12 }, (_, i) => ({ text: `Footer link ${i}`, href: `https://www.example-uni.de/en/about/page-${i}`, chrome: true }));
+  // TUM-style: one folder, programme name in the link text.
+  const tum = ['Informatics - Master of Science (M.Sc.)', 'Informatics - Bachelor of Science (B.Sc.)', 'Data Engineering and Analytics - Master of Science (M.Sc.)', 'Aerospace - Bachelor of Science (B.Sc.)', 'Architecture - Master of Arts (M.A.)', 'Management - Master of Science (M.Sc.)', 'Physics - Bachelor of Science (B.Sc.)', 'Chemistry - Master of Science (M.Sc.)', 'Lehramt Sport - State Exam Program']
+    .map(t => ({ text: t, href: `https://www.example-uni.de/en/studies/degree-programs/detail/${t.toLowerCase().replace(/[^a-z]+/g, '-')}`, context: '' }));
+  const a = programmesFromLinks([...chrome, ...tum, { text: 'Admission', href: 'https://www.example-uni.de/en/studies/admission' }], 'https://www.example-uni.de/en/studies/degree-programs');
+  assert.equal(a.length, 9);
+  assert.ok(a.some(p => p.name === 'Data Engineering and Analytics' && p.degree === 'master'));
+  assert.ok(a.some(p => p.name === 'Informatics' && p.degree === 'bachelor'));
+  assert.ok(!a.some(p => /footer/i.test(p.name)));
+  // RWTH-style: each programme in its own folder, "read more" style labels resolved to headings by the browser.
+  const rwth = ['Informatik M.Sc.', 'Informatik B.Sc.', 'Maschinenbau M.Sc.', 'Elektrotechnik B.Sc.', 'Physik M.Sc.', 'Chemie B.Sc.', 'Biologie M.Sc.', 'Architektur B.Sc.']
+    .map((t, i) => ({ text: t, href: `https://www.rwth.example.de/cms/root/studium/Liste/Studiengangbeschreibung/~id${i}/${t.replace(/[ .]+/g, '-')}/lidx/1/` }));
+  const b = programmesFromLinks([...chrome, ...rwth], 'https://www.rwth.example.de/cms/root/studium/Liste/lidx/1/');
+  assert.equal(b.length, 8);
+  assert.equal(b.filter(p => p.degree === 'master').length, 4);
+  assert.equal(cleanProgrammeName('Informatics - Master of Science (M.Sc.)'), 'Informatics');
+  assert.equal(degreeOf('Some Programme', 'some-programme-master-of-science-msc', ''), 'master');
+});
+
 test('database initialization refuses duplicate legacy rows without rewriting the file', async t => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'pothik-migration-test-'));
   const databasePath = path.join(directory, 'pothik.sqlite');
