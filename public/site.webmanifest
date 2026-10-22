@@ -1,0 +1,14 @@
+{
+  "name": "Pothik — Your path to a brighter tomorrow",
+  "short_name": "Pothik",
+  "description": "Study-abroad planning, scholarships and IELTS preparation for students from Bangladesh.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFFDF9",
+  "theme_color": "#70263D",
+  "icons": [
+    { "src": "/assets/brand/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/assets/brand/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/assets/brand/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -11,6 +11,7 @@ const nodemailer = require('nodemailer');
 const { z } = require('zod');
 const ai = require('./ai');
 const studentProfile = require('./profile');
+const QRCode = require('qrcode');
 const { createDatabase } = require('./db');
 const seed = require('./seed');
 const { refreshScholarships, seedOpportunities } = require('./opportunities');
@@ -295,9 +296,21 @@ async function start() {
     res.json({ ok: true, message: 'Password updated. Sign in with your new password.' });
   });
 
+  // Student ID card details: a stable card number derived from the account, and the join date.
+  function cardFor(userId) {
+    const created = db.prepare('SELECT created_at FROM users WHERE id=?').get(userId)?.created_at || '';
+    const number = `PTK-${String(userId).padStart(4, '0')}-${sha256(`card:${userId}`).slice(0, 4).toUpperCase()}`;
+    return { number, memberSince: created ? `${created.replace(' ', 'T')}Z` : null };
+  }
   app.get('/api/profile', requireAuth, (req, res) => {
     const { data, updatedAt } = readProfile(req.session.user.id);
-    res.json({ user: req.session.user, profile: data, updatedAt, completeness: studentProfile.completeness(data) });
+    res.json({ user: req.session.user, profile: data, updatedAt, completeness: studentProfile.completeness(data), card: cardFor(req.session.user.id) });
+  });
+  // The QR code opens the signed-in student's own profile; it carries no personal data.
+  app.get('/api/profile/qr.svg', requireAuth, async (req, res) => {
+    const origin = process.env.APP_ORIGIN || `${req.protocol}://${req.get('host')}`;
+    const svg = await QRCode.toString(`${origin}/?open=profile`, { type: 'svg', margin: 1, errorCorrectionLevel: 'M', color: { dark: '#2c111c', light: '#ffffff' } });
+    res.type('image/svg+xml').set('Cache-Control', 'private, max-age=3600').send(svg);
   });
   app.put('/api/profile', requireAuth, (req, res) => {
     const account = z.object({ name: z.string().trim().min(2, 'Enter your full name').max(80), preferred_language: z.enum(['en', 'bn']).default('en') }).safeParse(req.body);
@@ -582,6 +595,8 @@ ${context || 'No matching resources were retrieved from the Pothik knowledge bas
   }));
 
   app.use('/api/*', (_req, res) => res.status(404).json({ error: 'API endpoint not found.' }));
+  // Browsers request /favicon.ico directly; serve the Pothik mark instead of falling through to index.html.
+  app.get('/favicon.ico', (_req, res) => res.type('image/png').sendFile(path.join(PUBLIC, 'assets', 'brand', 'favicon-32.png'), { maxAge: PROD ? '7d' : 0 }));
   app.use(express.static(PUBLIC, { extensions: ['html'], maxAge: PROD ? '1h' : 0 }));
   app.get('*', (_req, res) => res.sendFile(path.join(PUBLIC, 'index.html')));
   app.use((err, _req, res, _next) => { console.error('Unhandled request error:', err.message); if (res.headersSent) return; res.status(500).json({ error: 'Unexpected server error. Please try again.' }); });

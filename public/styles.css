@@ -159,6 +159,158 @@ input,select,textarea{font-size:15px}
 .pf-danger{margin-top:22px;border-top:1px solid var(--line);padding-top:14px;font-size:13px;color:var(--muted)}
 .pf-danger summary{cursor:pointer;color:#b3261e;font-weight:800}
 .pf-delete{background:#b3261e;border-color:#b3261e;color:#fff}
+/* Student ID card on the profile page */
+.pf-layout{grid-template-columns:minmax(340px,410px) minmax(0,1fr)}
+.pf-summary{position:static;background:none;border:0;padding:0;gap:14px}
+.pf-facts,.pf-nav{background:var(--ivory);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.pf-facts{border-top:1px solid var(--line)}
+.pf-facts h4{margin:0 0 4px;font:800 11px/1 Manrope,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#9a5d6b}
+.id-card{position:relative;overflow:hidden;border-radius:22px;padding:22px;color:#f6efe9;border:2px solid transparent;
+  background:radial-gradient(circle at 88% 6%,rgba(216,189,145,.22),transparent 38%) padding-box,radial-gradient(circle at 0 100%,rgba(140,48,78,.55),transparent 55%) padding-box,linear-gradient(160deg,#341422,#1f0c15 55%,#150a10) padding-box,linear-gradient(140deg,#c79ad6,#e8cdd2 30%,#d8bd91 60%,#8fcf9a) border-box;
+  box-shadow:0 22px 50px rgba(44,17,28,.35)}
+.id-net{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.id-net line{stroke:rgba(216,189,145,.16);stroke-width:1}
+.id-net circle{fill:rgba(216,189,145,.38)}
+.id-card>*:not(.id-net){position:relative}
+.id-top{display:flex;align-items:center;gap:12px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,.09)}
+.id-logo{flex:0 0 auto;display:block;background:#fffdf9;border-radius:14px;padding:7px 12px;box-shadow:0 0 0 3px rgba(216,189,145,.4),0 8px 18px rgba(0,0,0,.25)}
+.id-logo img{display:block;width:132px;height:auto}
+.id-pass b{display:block;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#e6c27a}
+.id-pass small{display:block;font-size:11px;letter-spacing:.06em;color:rgba(246,239,233,.65);margin-top:3px}
+@media(max-width:480px){.id-logo img{width:108px}.id-pass b{font-size:10px}.id-pass small{font-size:10px}}
+.id-chip{margin-left:auto;width:42px;height:32px;border-radius:7px;border:1px solid #8a6a35;background:linear-gradient(90deg,transparent 46%,#8a6a35 46% 54%,transparent 54%),linear-gradient(0deg,transparent 30%,#8a6a35 30% 36%,transparent 36% 64%,#8a6a35 64% 70%,transparent 70%),linear-gradient(135deg,#f3d9a4,#c9a15c)}
+.id-hero{display:grid;grid-template-columns:128px minmax(0,1fr);gap:18px;align-items:center;margin:22px 0 26px}
+.id-photo{position:relative}
+.id-photo .pf-avatar{width:128px;height:150px;border-radius:22px;border:3px solid #e6c27a;background:var(--burgundy);color:#fff5f0;font:700 52px Georgia,serif;box-shadow:0 0 0 4px rgba(230,194,122,.18),0 12px 26px rgba(0,0,0,.35)}
+.id-photo .pf-avatar img{border-radius:18px}
+.id-photo .pf-avatar:hover::after,.id-photo .pf-avatar:focus-visible::after{border-radius:18px}
+.id-online{position:absolute;top:-5px;right:-5px;width:16px;height:16px;border-radius:50%;background:#4ade80;border:3px solid #1f0c15;box-shadow:0 0 12px rgba(74,222,128,.75)}
+.id-photo-btn{position:absolute;left:50%;bottom:-15px;transform:translateX(-50%);display:inline-flex;align-items:center;gap:6px;white-space:nowrap;padding:6px 12px;border-radius:999px;border:1px solid rgba(230,194,122,.55);background:rgba(21,10,16,.94);color:#f3d9a4;font-size:12px;font-weight:700;cursor:pointer}
+.id-photo-btn svg{width:15px;height:15px}
+.id-photo-btn:hover{background:#2c111c}
+.id-eyebrow{font-size:11px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:#e6c27a}
+.id-who h3{font-size:26px;line-height:1.15;color:#fff;margin:6px 0 6px;overflow-wrap:anywhere}
+.id-who p{font-size:13px;line-height:1.55;color:rgba(246,239,233,.75);margin:0 0 10px}
+.id-badges{display:flex;flex-wrap:wrap;gap:7px}
+.id-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;border:1px solid}
+.id-badge svg{width:12px;height:12px}
+.id-badge-role{color:#f0d2d8;background:rgba(232,205,210,.08);border-color:rgba(232,205,210,.35)}
+.id-badge-ok{color:#86efac;background:rgba(74,222,128,.1);border-color:rgba(74,222,128,.38)}
+.id-badge-warn{color:#fcd34d;background:rgba(252,211,77,.08);border-color:rgba(252,211,77,.35)}
+.id-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px 18px;margin:0;padding-top:18px;border-top:1px solid rgba(255,255,255,.09)}
+.id-grid dt{display:flex;align-items:center;gap:7px;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:rgba(246,239,233,.55)}
+.id-grid dt svg{width:15px;height:15px;flex:0 0 15px;color:#e6c27a}
+.id-grid dd{margin:4px 0 0 22px;font-size:14px;font-weight:600;color:#fff;overflow-wrap:anywhere;line-height:1.4}
+.id-grid dd a{color:#f3d9a4}
+.id-grid dd a:hover{text-decoration:underline}
+.id-empty{color:rgba(246,239,233,.35);font-weight:400;font-style:italic}
+.id-foot{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;margin-top:20px;padding-top:16px;border-top:1px dashed rgba(255,255,255,.14)}
+.id-label{display:block;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:rgba(246,239,233,.55)}
+.id-foot b{display:block;font:700 18px/1.4 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.08em;color:#fff;margin:4px 0 8px}
+.id-foot small{display:flex;align-items:center;gap:6px;font-size:12px;color:rgba(246,239,233,.6)}
+.id-foot small svg{width:15px;height:15px;color:#e6c27a}
+.id-qr{width:108px;height:108px;flex:0 0 108px;border-radius:14px;border:3px solid #e6c27a;background:#fff;padding:5px}
+.id-photo-tools{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 4px}
+.id-photo-tools small{font-size:11px;color:var(--muted)}
+.id-photo-tools .text-link{font-size:12px;padding:2px 0}
+.id-status{border-radius:14px;padding:14px 18px;font-size:13px}
+.id-status-done{display:flex;align-items:center;gap:10px;background:#e7f2e4;border:1px solid #b9d7b3;color:#2f6b3a}
+.id-status-done svg{width:20px;height:20px}
+.id-status-todo{background:var(--ivory);border:1px solid var(--line);color:var(--burgundy-deep)}
+.id-status-top{display:flex;justify-content:space-between;gap:10px}
+.id-status-top span{color:var(--muted)}
+.id-status-todo p{margin:8px 0 0;font-size:12px;color:var(--muted);line-height:1.55}
+@media(max-width:480px){.id-card{padding:18px}.id-hero{grid-template-columns:104px minmax(0,1fr);gap:14px}.id-photo .pf-avatar{width:104px;height:124px;font-size:42px}.id-who h3{font-size:21px}.id-grid{grid-template-columns:1fr}.id-qr{width:92px;height:92px;flex-basis:92px}.id-foot b{font-size:15px}}
+/* Pothik logo marks (emblem in small avatars, full logo in modals) */
+.preview-mark,.drawer-avatar,.chat-avatar{background:#fffdf9;border:1px solid #ead9dc;border-radius:50%;overflow:hidden;padding:2px}
+.preview-mark img,.drawer-avatar img,.chat-avatar img{width:100%;height:100%;object-fit:contain;display:block}
+.drawer-avatar{width:40px;height:40px;box-shadow:0 2px 8px rgba(75,23,40,.12)}
+.auth-brand{justify-content:flex-start}
+.auth-logo{display:block;width:150px;height:auto}
+.signup-modal .auth-logo{width:132px}
+/* Profile pages: side tabs + one view at a time */
+.profile-panel .pf-layout{grid-template-columns:230px minmax(0,1fr);gap:28px}
+.pf-tabs{position:sticky;top:0;display:flex;flex-direction:column;gap:4px;background:var(--ivory);border:1px solid var(--line);border-radius:14px;padding:8px;align-self:start}
+.pf-tabs [role=tab]{display:flex;align-items:center;gap:11px;width:100%;border:0;background:transparent;border-radius:9px;padding:11px 12px;font-size:14px;font-weight:600;color:var(--ink);text-align:left;cursor:pointer;white-space:nowrap}
+.pf-tabs [role=tab] svg{width:18px;height:18px;flex:0 0 18px;color:var(--burgundy)}
+.pf-tabs [role=tab]:hover{background:var(--cream)}
+.pf-tabs [role=tab][aria-selected=true]{background:var(--burgundy);color:#fffaf6}
+.pf-tabs [role=tab][aria-selected=true] svg{color:#f3d9a4}
+.pf-tabs [role=tab]:focus-visible{outline:3px solid rgba(112,38,61,.35);outline-offset:2px}
+.pf-view[hidden]{display:none!important}
+.pf-overview{display:grid;grid-template-columns:minmax(300px,360px) minmax(0,1fr);gap:24px;align-items:start}
+.pf-overview-card,.pf-overview-side{display:flex;flex-direction:column;gap:14px;min-width:0}
+.pf-overview .id-card,.pf-overview .id-photo-tools{margin:0}
+.pf-next{background:var(--ivory);border:1px solid var(--line);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:6px}
+.pf-next h4{margin:0 0 6px;font:800 11px/1 Manrope,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#9a5d6b}
+.pf-next button{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;border:1px solid var(--line);background:#fffdf9;border-radius:10px;padding:10px 12px;text-align:left;cursor:pointer}
+.pf-next button:hover,.pf-next button:focus-visible{border-color:#cbaeb7;background:var(--blush);outline:none}
+.pf-next button b{display:block;font-size:13px;color:var(--burgundy-deep)}
+.pf-next button small{display:block;font-size:11px;color:var(--muted);margin-top:2px}
+.pf-next button svg{width:16px;height:16px;flex:0 0 16px;color:var(--burgundy)}
+.pf-next p{margin:4px 0 0;font-size:11px;color:var(--muted)}
+.pf-savebar[hidden]{display:none}
+@media(max-width:1100px){.pf-overview{grid-template-columns:1fr}.pf-overview .id-card,.pf-overview .id-photo-tools{margin:0 auto}}
+@media(max-width:900px){.profile-panel .pf-layout{grid-template-columns:1fr;gap:16px}.pf-tabs{position:sticky;top:-16px;z-index:2;flex-direction:row;overflow-x:auto;scrollbar-width:none;border-radius:12px;padding:6px}.pf-tabs::-webkit-scrollbar{display:none}.pf-tabs [role=tab]{width:auto;flex:0 0 auto;padding:9px 12px;font-size:13px}}
+/* Account menu (avatar dropdown) */
+.account-wrap{position:relative;display:flex}
+.avatar-button[aria-expanded=true]{box-shadow:0 0 0 3px rgba(112,38,61,.25)}
+.account-menu{position:absolute;right:0;top:calc(100% + 10px);z-index:60;width:296px;max-width:calc(100vw - 24px);background:var(--ivory);border:1px solid var(--line);border-radius:14px;box-shadow:0 22px 50px rgba(44,17,28,.18),0 2px 6px rgba(44,17,28,.06);padding:8px;transform-origin:top right;animation:account-in .14s ease-out}
+.account-menu::before{content:'';position:absolute;top:-7px;right:14px;width:12px;height:12px;background:var(--ivory);border-left:1px solid var(--line);border-top:1px solid var(--line);transform:rotate(45deg)}
+@keyframes account-in{from{opacity:0;transform:translateY(-4px) scale(.98)}to{opacity:1;transform:none}}
+.account-head{display:flex;align-items:center;gap:12px;padding:10px 10px 12px}
+.account-avatar{width:44px;height:44px;flex:0 0 44px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:var(--burgundy);color:#fff5f0;font:700 18px Georgia,serif}
+.account-avatar img{width:100%;height:100%;object-fit:cover}
+.account-who{min-width:0}
+.account-who b{display:block;font-size:14px;color:var(--burgundy-deep);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.account-who small{display:block;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.account-progress{display:block;width:calc(100% - 20px);margin:0 10px 8px;padding:10px 12px;background:var(--cream);border:0;border-radius:10px;text-align:left;cursor:pointer}
+.account-progress:hover,.account-progress:focus-visible{background:var(--blush);outline:none}
+.account-progress:focus-visible{box-shadow:inset 0 0 0 2px rgba(112,38,61,.35)}
+.account-progress>div:first-child{display:flex;justify-content:space-between;gap:8px;font-size:12px;font-weight:700;color:var(--burgundy-deep)}
+.account-progress>div:first-child span+span{color:var(--burgundy);font-weight:600}
+.account-progress .pf-progress-bar{height:5px}
+.account-sep{height:1px;background:var(--line);margin:6px 4px}
+.account-item{display:flex;align-items:center;gap:12px;width:100%;border:0;background:transparent;border-radius:9px;padding:10px 12px;font-size:14px;font-weight:600;color:var(--ink);text-align:left;cursor:pointer}
+.account-item svg{width:18px;height:18px;flex:0 0 18px;color:var(--burgundy)}
+.account-item:hover,.account-item:focus-visible{background:var(--blush);outline:none;color:var(--burgundy-deep)}
+.account-item:focus-visible{box-shadow:inset 0 0 0 2px rgba(112,38,61,.35)}
+.account-item.danger,.account-item.danger svg{color:#b3261e}
+.account-item.danger:hover,.account-item.danger:focus-visible{background:#fbeaea}
+@media(prefers-reduced-motion:reduce){.account-menu{animation:none}}
+@media(max-width:480px){.account-menu{position:fixed;top:70px;right:12px;left:12px;width:auto;max-width:none}.account-menu::before{right:22px}}
+/* Compact student card */
+.pf-layout{grid-template-columns:minmax(300px,350px) minmax(0,1fr)}
+.id-card{padding:16px;border-radius:18px;width:100%;max-width:360px;margin:0 auto}
+.id-photo-tools{width:100%;max-width:360px;margin:0 auto}
+.id-photo-tools .text-link{white-space:nowrap;flex:0 0 auto}
+.id-top{gap:10px;padding-bottom:12px}
+.id-logo{border-radius:10px;padding:4px 8px;box-shadow:0 0 0 2px rgba(216,189,145,.4),0 6px 14px rgba(0,0,0,.22)}
+.id-logo img{width:92px}
+.id-pass b{font-size:10px;letter-spacing:.16em}
+.id-pass small{font-size:10px;margin-top:2px}
+.id-chip{width:32px;height:24px;border-radius:5px}
+.id-hero{grid-template-columns:92px minmax(0,1fr);gap:14px;margin:16px 0 20px}
+.id-photo .pf-avatar{width:92px;height:108px;border-radius:16px;border-width:2px;font-size:38px}
+.id-photo .pf-avatar img,.id-photo .pf-avatar:hover::after,.id-photo .pf-avatar:focus-visible::after{border-radius:13px}
+.id-online{width:12px;height:12px;border-width:2px;top:-4px;right:-4px}
+.id-photo-btn{bottom:-12px;padding:4px 9px;font-size:10px;gap:4px}
+.id-photo-btn svg{width:12px;height:12px}
+.id-eyebrow{font-size:9px;letter-spacing:.2em}
+.id-who h3{font-size:20px;margin:4px 0}
+.id-who p{font-size:12px;margin-bottom:8px}
+.id-badge{font-size:10px;padding:3px 8px}
+.id-grid{gap:11px 14px;padding-top:14px}
+.id-grid dt{font-size:9px;gap:6px}
+.id-grid dt svg{width:13px;height:13px;flex-basis:13px}
+.id-grid dd{font-size:12px;margin:3px 0 0 19px}
+.id-foot{margin-top:14px;padding-top:12px}
+.id-label{font-size:9px}
+.id-foot b{font-size:14px;margin:3px 0 6px}
+.id-foot small{font-size:11px}
+.id-foot small svg{width:13px;height:13px}
+.id-qr{width:78px;height:78px;flex-basis:78px;border-radius:10px;border-width:2px;padding:3px}
+@media(max-width:480px){.id-hero{grid-template-columns:84px minmax(0,1fr)}.id-photo .pf-avatar{width:84px;height:100px}.id-who h3{font-size:18px}.id-logo img{width:84px}.id-qr{width:72px;height:72px;flex-basis:72px}.id-foot b{font-size:13px}}
 @media(max-width:1050px){body.signed-in .avatar-button{display:grid;place-items:center}}
 @media(max-width:900px){.pf-layout{grid-template-columns:1fr}.pf-summary{position:static}.profile-panel{inset:0}}
 @media(max-width:600px){.pf-grid .pf-field,.pf-grid .pf-third{grid-column:1/-1}.pf-grid .pf-quarter{grid-column:span 6}.signup-modal{padding:22px 16px}.signup-modal h2{font-size:23px}.pf-progress-meta{flex-direction:column;align-items:flex-start}.pf-savebar{flex-direction:column;align-items:stretch}}

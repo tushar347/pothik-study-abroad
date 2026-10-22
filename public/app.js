@@ -159,7 +159,11 @@ function updateUserUI() {
   const u = state.user; const letter = u?.name?.trim()?.[0]?.toUpperCase() || 'G';
   document.body.classList.toggle('signed-in', Boolean(u));
   $('#profileButton').textContent = letter;
-  if (u?.avatar_url) { const img = document.createElement('img'); img.src = u.avatar_url; img.alt = ''; img.onerror = () => { $('#profileButton').textContent = letter; }; $('#profileButton').replaceChildren(img); } $('#profileButton').setAttribute('aria-label', u ? 'Open my profile' : 'Log in'); $('#profileButton').title = u ? 'My profile' : 'Log in'; $('#headerLogin').textContent = u ? 'Sign out' : 'Log in'; $('#headerSignup').hidden = Boolean(u);
+  if (u?.avatar_url) { const img = document.createElement('img'); img.src = u.avatar_url; img.alt = ''; img.onerror = () => { $('#profileButton').textContent = letter; }; $('#profileButton').replaceChildren(img); } $('#profileButton').setAttribute('aria-label', u ? `Account menu for ${u.name}` : 'Log in'); $('#profileButton').title = u ? 'Account menu' : 'Log in';
+  // Signed in: the avatar is a menu button (WAI-ARIA APG) and "Sign out" lives inside the menu.
+  if (u) { $('#profileButton').setAttribute('aria-haspopup', 'menu'); $('#profileButton').setAttribute('aria-controls', 'accountMenu'); $('#profileButton').setAttribute('aria-expanded', String(isAccountMenuOpen())); }
+  else { ['aria-haspopup', 'aria-controls', 'aria-expanded'].forEach(a => $('#profileButton').removeAttribute(a)); closeAccountMenu(false); }
+  $('#headerLogin').textContent = 'Log in'; $('#headerLogin').hidden = Boolean(u); $('#headerSignup').hidden = Boolean(u);
   $('#footerLogin').textContent = u ? 'Sign out' : 'Log in'; $('#footerSignup').hidden = Boolean(u); $('#footerAdmin').hidden = u?.role !== 'admin'; $('#refreshScholarships').hidden = u?.role !== 'admin';
   setText('#savedRoadmapCount', u ? `${state.roadmaps.length} saved` : 'Sign in to save');
   renderRoadmaps();
@@ -226,17 +230,18 @@ async function submitAuth(e) {
       return;
     }
     state.user = data.user; await loadRoadmaps(); updateUserUI(); closeAuth(); toast(`Welcome back${state.user.name ? ', ' + state.user.name.split(' ')[0] : ''}. Open your profile from the avatar at the top.`);
+    if (state.openProfileAfterLogin) { state.openProfileAfterLogin = false; openProfile(); }
   } catch (err) { $('#authMessage').textContent = err.message; }
   finally { button.disabled = false; }
 }
 async function toggleLogin() {
   if (!state.user) { showAuth('login'); return; }
-  try { await api('/api/auth/logout', { method: 'POST', body: '{}' }); state.user = null; state.roadmaps = []; updateUserUI(); toast('You have signed out.'); }
+  try { await api('/api/auth/logout', { method: 'POST', body: '{}' }); state.user = null; state.roadmaps = []; state.profileCompleteness = undefined; updateUserUI(); toast('You have signed out.'); }
   catch (e) { toast(e.message); }
 }
 function appendChat(role, text, sources = [], loading = false) {
   const wrap = document.createElement('div'); wrap.className = `chat-message ${role === 'user' ? 'user' : 'assistant'}`;
-  if (role !== 'user') { const av = document.createElement('span'); av.className = 'chat-avatar'; av.textContent = 'প'; wrap.appendChild(av); }
+  if (role !== 'user') { const av = document.createElement('span'); av.className = 'chat-avatar'; av.innerHTML = '<img src="/assets/brand/pothik-mark.png" alt="" width="28" height="28">'; wrap.appendChild(av); }
   const content = document.createElement('div'); content.className = 'message-content';
   if (role !== 'user' && !loading) renderRichText(content, text);
   else { const p = document.createElement('p'); p.textContent = text; if (loading) p.classList.add('loading-text'); content.appendChild(p); }
@@ -288,6 +293,64 @@ async function submitTutor(e) {
   catch (err) { wait.remove(); appendChat('assistant', err.message); }
   finally { state.chatBusy = false; send.disabled = false; }
 }
+// ---------- Account menu (avatar dropdown), following the WAI-ARIA menu button pattern ----------
+const menuIcon = d => `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const ACCOUNT_ITEMS = [
+  { id: 'profile', label: 'My profile & student card', icon: '<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>', run: () => openProfile() },
+  { id: 'goals', label: 'Study goals', icon: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>', run: () => openProfile('goals') },
+  { id: 'academic', label: 'Academic background', icon: '<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5M8 7h7"/>', run: () => openProfile('academic') },
+  { id: 'tests', label: 'Test scores', icon: '<path d="m2 9 10-5 10 5-10 5z"/><path d="M6 11v5c3 2 9 2 12 0v-5"/>', run: () => openProfile('tests') },
+  { id: 'roadmap', label: 'My roadmaps', icon: '<path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/>', run: () => { location.hash = '#roadmap'; $('#roadmap')?.scrollIntoView({ behavior: 'smooth' }); } },
+  { id: 'counsellor', label: 'Ask the AI counsellor', icon: '<path d="M4 5h16v11H9l-5 4z"/><path d="M8 10h8M8 13h5"/>', run: () => openCounsellor() },
+  { id: 'security', label: 'Password & security', icon: '<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>', run: () => openProfile('security') },
+  { id: 'admin', label: 'Admin workspace', icon: '<path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/>', adminOnly: true, run: () => openAdmin() },
+  { id: 'signout', label: 'Sign out', icon: '<path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h11"/>', danger: true, run: () => toggleLogin() }
+];
+const isAccountMenuOpen = () => Boolean($('#accountMenu') && !$('#accountMenu').hidden);
+function accountMenuItems() { return $$('#accountMenu [role=menuitem]'); }
+function ensureAccountMenu() {
+  if ($('#accountMenu')) return;
+  const wrap = document.createElement('div'); wrap.className = 'account-wrap';
+  const button = $('#profileButton'); button.replaceWith(wrap); wrap.append(button);
+  wrap.insertAdjacentHTML('beforeend', '<div class="account-menu" id="accountMenu" role="menu" aria-labelledby="profileButton" hidden></div>');
+  const menu = $('#accountMenu');
+  menu.addEventListener('click', e => { const item = e.target.closest('[role=menuitem]'); if (!item) return; const action = ACCOUNT_ITEMS.find(i => i.id === item.dataset.action); closeAccountMenu(false); action.run(); });
+  menu.addEventListener('keydown', e => {
+    const items = accountMenuItems(); const i = items.indexOf(document.activeElement);
+    const go = n => { e.preventDefault(); items[(n + items.length) % items.length].focus(); };
+    if (e.key === 'ArrowDown') go(i + 1); else if (e.key === 'ArrowUp') go(i - 1);
+    else if (e.key === 'Home') go(0); else if (e.key === 'End') go(items.length - 1);
+    else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeAccountMenu(true); }
+    else if (e.key === 'Tab') closeAccountMenu(false);
+    else if (e.key.length === 1 && /\S/.test(e.key)) {
+      // Type-ahead: jump to the next item starting with that letter.
+      const order = [...items.slice(i + 1), ...items.slice(0, i + 1)];
+      const hit = order.find(el => el.textContent.trim().toLowerCase().startsWith(e.key.toLowerCase())); if (hit) { e.preventDefault(); hit.focus(); }
+    }
+  });
+  document.addEventListener('pointerdown', e => { if (isAccountMenuOpen() && !e.target.closest('.account-wrap')) closeAccountMenu(false); });
+}
+function renderAccountMenu() {
+  const u = state.user; const letter = esc(u.name.trim()[0]?.toUpperCase() || 'P');
+  const pct = state.profileCompleteness;
+  $('#accountMenu').innerHTML = `<div class="account-head" role="none"><span class="account-avatar">${u.avatar_url ? `<img src="${esc(u.avatar_url)}" alt="">` : letter}</span><span class="account-who"><b>${esc(u.name)}</b><small>${esc(u.email)}</small></span></div>
+    ${pct === undefined ? '' : `<button type="button" role="menuitem" tabindex="-1" class="account-progress" data-action="profile"><div><span>${pct >= 100 ? 'Profile complete' : `Profile ${pct}% complete`}</span>${pct < 100 ? '<span>Finish it →</span>' : ''}</div><div class="pf-progress-bar"><span style="width:${pct}%"></span></div></button>`}
+    <div class="account-sep" role="separator"></div>
+    ${ACCOUNT_ITEMS.filter(i => !i.adminOnly || u.role === 'admin').map(i => `${i.id === 'signout' ? '<div class="account-sep" role="separator"></div>' : ''}<button type="button" role="menuitem" tabindex="-1" class="account-item${i.danger ? ' danger' : ''}" data-action="${i.id}">${menuIcon(i.icon)}<span>${esc(i.label)}</span></button>`).join('')}`;
+}
+function openAccountMenu(focus = 'first') {
+  if (!state.user) return;
+  ensureAccountMenu(); renderAccountMenu();
+  $('#accountMenu').hidden = false; $('#profileButton').setAttribute('aria-expanded', 'true');
+  const items = accountMenuItems(); (focus === 'last' ? items.at(-1) : items[0])?.focus();
+  // Refresh the completion figure in the background; re-render only if it changed.
+  api('/api/profile').then(d => { if (d.completeness?.percent !== state.profileCompleteness) { state.profileCompleteness = d.completeness.percent; if (isAccountMenuOpen()) { const active = document.activeElement?.dataset?.action; renderAccountMenu(); $(`#accountMenu [data-action="${active}"]`)?.focus(); } } }).catch(() => {});
+}
+function closeAccountMenu(returnFocus = true) {
+  if (!$('#accountMenu')) return;
+  $('#accountMenu').hidden = true; $('#profileButton')?.setAttribute('aria-expanded', 'false');
+  if (returnFocus) $('#profileButton')?.focus();
+}
 async function openAdmin() {
   if (state.user?.role !== 'admin') return showAuth('login');
   try { state.adminContent = await api('/api/admin/site-content'); $('#contentJson').value = JSON.stringify(state.adminContent, null, 2); $('#adminPanel').hidden = false; }
@@ -320,7 +383,11 @@ function bindEvents() {
   $('#reportForm').addEventListener('submit', async e => { e.preventDefault(); const fd = new FormData(e.currentTarget); const msg = $('#reportMessage'); msg.textContent = ''; try { const data = await api('/api/reports', { method: 'POST', body: JSON.stringify(Object.fromEntries(fd.entries())) }); msg.textContent = `${data.message} Reference: ${data.reference}`; e.currentTarget.reset(); } catch (err) { msg.textContent = err.message; } });
   $('#headerLogin').addEventListener('click', toggleLogin); $('#footerLogin').addEventListener('click', toggleLogin);
   $('#headerSignup').addEventListener('click', () => showAuth('signup')); $('#footerSignup').addEventListener('click', () => showAuth('signup'));
-  $('#profileButton').addEventListener('click', () => state.user ? openProfile() : showAuth('login'));
+  $('#profileButton').addEventListener('click', () => { if (!state.user) return showAuth('login'); isAccountMenuOpen() ? closeAccountMenu() : openAccountMenu('first'); });
+  $('#profileButton').addEventListener('keydown', e => {
+    if (!state.user || !['ArrowDown', 'ArrowUp'].includes(e.key)) return;
+    e.preventDefault(); openAccountMenu(e.key === 'ArrowUp' ? 'last' : 'first');
+  });
   $('#closeAuth').addEventListener('click', closeAuth); $('#authModal').addEventListener('click', e => { if (e.target.id === 'authModal') closeAuth(); });
   $('#authTabs').querySelectorAll('[data-auth-tab]').forEach(b => b.addEventListener('click', () => showAuth(b.dataset.authTab)));
   $('#authForm').addEventListener('submit', submitAuth); $('#forgotPassword').addEventListener('click', () => showAuth('forgot'));
@@ -370,6 +437,11 @@ async function init() {
     console.error('[Pothik boot] Section unavailable', { section: 'roadmaps', message: error.message });
   }
   if (state.user?.role === 'admin') $('#footerAdmin').hidden = false;
+  // The student-card QR code links to /?open=profile.
+  if (query.get('open') === 'profile') {
+    history.replaceState({}, '', location.pathname);
+    if (state.user) openProfile(); else { state.openProfileAfterLogin = true; showAuth('login'); }
+  }
   if (failed.length) toast(`Some content could not load: ${failed.join(', ')}. See the browser console for details.`);
 }
 init();

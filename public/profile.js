@@ -1,6 +1,26 @@
 /* Student signup wizard and profile page.
    Uses $, esc, api, toast, state, loadRoadmaps, updateUserUI and toggleLogin from app.js at call time. */
 (() => {
+  // Small stroke icons for the student card (inherit currentColor).
+  const icon = d => `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+  const ICONS = {
+    camera: icon('<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>'),
+    phone: icon('<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/>'),
+    mail: icon('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>'),
+    plane: icon('<path d="M2 16l20-7-4-2-6 2-6-4-2 1 4 5-4 2-2-1-1 1z"/><path d="M3 21h18"/>'),
+    globe: icon('<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>'),
+    pin: icon('<path d="M12 21s-7-6.5-7-12a7 7 0 0 1 14 0c0 5.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/>'),
+    cap: icon('<path d="m2 9 10-5 10 5-10 5z"/><path d="M6 11v5c3 2 9 2 12 0v-5"/>'),
+    calendar: icon('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'),
+    check: icon('<path d="m5 12 5 5 9-10"/>'),
+    card: icon('<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2.2"/><path d="M5.8 16c.6-1.6 1.8-2.4 3.2-2.4s2.6.8 3.2 2.4M14 10h4M14 13h3"/>'),
+    user: icon('<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>'),
+    target: icon('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>'),
+    book: icon('<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5M8 7h7"/>'),
+    lock: icon('<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>'),
+    arrow: icon('<path d="M5 12h14M13 6l6 6-6 6"/>'),
+    scan: icon('<path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><rect x="8" y="8" width="8" height="8" rx="1"/>')
+  };
   let OPTS = null;
   const loadOptions = async () => OPTS || (OPTS = (await api('/api/profile/options')).options);
   const thisYear = new Date().getFullYear();
@@ -198,7 +218,7 @@
     if ($('#signupModal')) return;
     document.body.insertAdjacentHTML('beforeend', `<div class="modal-backdrop" id="signupModal" hidden><section class="auth-modal signup-modal" role="dialog" aria-modal="true" aria-labelledby="signupTitle">
       <button class="modal-close" type="button" data-close-signup aria-label="Close">×</button>
-      <div class="auth-brand"><span class="auth-mark">প</span><span><b>Pothik</b><small>Your path to a brighter tomorrow</small></span></div>
+      <div class="auth-brand"><img class="auth-logo" src="/assets/brand/pothik-logo-card.png" alt="Pothik — Your path to a brighter tomorrow" width="360" height="182"></div>
       <div class="pf-progress"><div class="pf-progress-meta"><span id="signupStepLabel"></span><button type="button" class="text-link" data-switch-login>Already have an account? Log in</button></div><div class="pf-progress-bar"><span id="signupProgress"></span></div></div>
       <h2 id="signupTitle"></h2><p class="auth-subtitle" id="signupSub"></p>
       <form id="signupForm" novalidate></form>
@@ -268,24 +288,53 @@
     { id: 'tests', title: 'English & admission tests', fields: GROUPS.tests },
     { id: 'personal', title: 'Personal details', fields: GROUPS.personal }
   ];
+  // Each profile page is its own view; the account menu opens them directly.
+  const VIEWS = [
+    { id: 'overview', title: 'Overview', heading: 'My student card', desc: 'Your Pothik student pass, profile progress and scores at a glance.', icon: 'card' },
+    { id: 'account', title: 'Account details', desc: 'Your name, contact number and preferred language.', icon: 'user' },
+    { id: 'goals', title: 'Study goals', desc: 'Where, what and when you want to study — this shapes every recommendation.', icon: 'target' },
+    { id: 'academic', title: 'Academic background', desc: 'Your results as they appear on your certificates.', icon: 'book' },
+    { id: 'tests', title: 'Test scores', desc: 'English proficiency and admissions tests such as IELTS, TOEFL, GRE and GMAT.', icon: 'cap' },
+    { id: 'personal', title: 'Personal details', desc: 'Optional details that help with visa and scholarship guidance.', icon: 'pin' },
+    { id: 'security', title: 'Password & security', desc: 'Change your password, or delete your account and data.', icon: 'lock' }
+  ];
+  const FORM_VIEWS = new Set(SECTIONS.map(s => s.id));
+  const viewOfField = name => SECTIONS.find(s => s.fields.includes(name))?.id;
+  let currentView = 'overview';
+  let dirty = false;
   const optLabel = (key, v) => OPTS[key]?.find(([x]) => x === String(v))?.[1] || v;
   function profileMarkup() {
     if ($('#profilePanel')) return;
-    document.body.insertAdjacentHTML('beforeend', `<section class="profile-panel" id="profilePanel" hidden aria-labelledby="profileName">
-      <div class="admin-panel-head"><div><div class="eyebrow">MY PROFILE</div><h2 id="profileName"></h2><p id="profileEmail"></p></div>
+    document.body.insertAdjacentHTML('beforeend', `<section class="profile-panel" id="profilePanel" hidden aria-labelledby="profileViewTitle">
+      <div class="admin-panel-head"><div><div class="eyebrow" id="profileEyebrow">MY PROFILE</div><h2 id="profileViewTitle"></h2><p id="profileViewDesc"></p></div>
         <div class="pf-head-actions"><button type="button" class="button pf-back" id="profileSignOut">Sign out</button><button class="icon-button" type="button" id="closeProfile" aria-label="Close profile">×</button></div></div>
       <div class="pf-layout">
-        <aside class="pf-summary">
-          <div class="pf-photo"><button type="button" class="pf-avatar" id="profileAvatar" aria-label="Change profile photo"></button>
-            <div class="pf-photo-actions"><button type="button" class="text-link" id="photoChange">Upload photo</button><button type="button" class="text-link pf-photo-remove" id="photoRemove" hidden>Remove</button>
-              <input type="file" id="photoInput" accept="image/png,image/jpeg,image/webp" hidden><small>PNG, JPEG or WebP. You can zoom and position it next.</small></div></div>
-          <div class="pf-meter"><div class="pf-meter-top"><b>Profile strength</b><span id="profilePercent"></span></div><div class="pf-progress-bar"><span id="profileMeter"></span></div><p id="profileMissing"></p></div>
-          <div class="pf-facts" id="profileFacts"></div>
-          <nav class="pf-nav" aria-label="Profile sections">${SECTIONS.map(s => `<a href="#pf-sec-${s.id}">${esc(s.title)}</a>`).join('')}<a href="#pf-sec-security">Security</a></nav>
-        </aside>
+        <nav class="pf-tabs" role="tablist" aria-label="Profile pages" aria-orientation="vertical">${VIEWS.map(v => `<button type="button" role="tab" id="pf-tab-${v.id}" aria-controls="pf-view-${v.id}" aria-selected="false" tabindex="-1" data-view="${v.id}">${ICONS[v.icon]}<span>${esc(v.title)}</span></button>`).join('')}</nav>
         <div class="pf-main">
+          <section class="pf-view pf-overview" id="pf-view-overview" role="tabpanel" aria-labelledby="pf-tab-overview" hidden>
+           <div class="pf-overview-card">
+          <article class="id-card" aria-label="Pothik student card">
+            <svg class="id-net" viewBox="0 0 400 560" aria-hidden="true" preserveAspectRatio="none"><g><line x1="330" y1="60" x2="400" y2="210"/><line x1="330" y1="60" x2="270" y2="190"/><line x1="270" y1="190" x2="400" y2="320"/><line x1="230" y1="420" x2="400" y2="360"/><line x1="0" y1="300" x2="120" y2="380"/></g><g><circle cx="330" cy="60" r="4"/><circle cx="270" cy="190" r="3"/><circle cx="400" cy="320" r="3"/><circle cx="230" cy="420" r="3"/></g></svg>
+            <header class="id-top"><span class="id-logo"><img src="/assets/brand/pothik-logo-card.png" alt="Pothik — Your path to a brighter tomorrow" width="360" height="182"></span><span class="id-pass"><b>Student pass</b><small>Study abroad</small></span><span class="id-chip" aria-hidden="true"></span></header>
+            <div class="id-hero">
+              <div class="id-photo"><button type="button" class="pf-avatar" id="profileAvatar" aria-label="Change profile photo"></button><span class="id-online" title="Active member"></span>
+                <button type="button" class="id-photo-btn" id="photoChange">${ICONS.camera}<span>Upload photo</span></button></div>
+              <div class="id-who"><div class="id-eyebrow">Student identity</div><h3 id="cardName"></h3><p id="cardGoal"></p><div class="id-badges" id="cardBadges"></div></div>
+            </div>
+            <dl class="id-grid" id="cardGrid"></dl>
+            <footer class="id-foot"><div><span class="id-label">Card no.</span><b id="cardNumber"></b><small>${ICONS.scan} Scan to open profile</small></div><img class="id-qr" id="cardQr" alt="QR code that opens your Pothik profile" width="120" height="120"></footer>
+          </article>
+          <input type="file" id="photoInput" accept="image/png,image/jpeg,image/webp" hidden>
+          <div class="id-photo-tools"><small>PNG, JPEG or WebP — zoom and position it after choosing.</small><button type="button" class="text-link pf-photo-remove" id="photoRemove" hidden>Remove photo</button></div>
+           </div>
+           <div class="pf-overview-side">
+            <div class="id-status" id="cardStatus"></div>
+            <div class="pf-next" id="profileNext"></div>
+            <div class="pf-facts" id="profileFacts"></div>
+           </div>
+          </section>
           <form id="profileForm" novalidate></form>
-          <section class="admin-box pf-card" id="pf-sec-security"><h3>Security</h3>
+          <section class="admin-box pf-card pf-view" id="pf-view-security" role="tabpanel" aria-labelledby="pf-tab-security" hidden><h3>Change password</h3>
             <form id="passwordForm" novalidate><div class="pf-grid">${['currentPassword', 'newPassword'].map(n => `<label class="pf-field pf-half" data-item="${n}"><span class="pf-label">${n === 'currentPassword' ? 'Current password' : 'New password'}</span><input type="password" name="${n}" required ${n === 'newPassword' ? 'minlength="12" autocomplete="new-password"' : 'autocomplete="current-password"'} maxlength="72"><small class="pf-error"></small></label>`).join('')}</div>
               <button type="submit" class="button button-primary">Change password</button><div class="form-message" id="passwordMessage" role="status"></div></form>
             <details class="pf-danger"><summary>Delete my account</summary><p>This permanently deletes your account, profile and saved roadmaps. It cannot be undone.</p>
@@ -294,62 +343,146 @@
         </div>
       </div></section>`);
     $('#closeProfile').addEventListener('click', closeProfile);
-    $('#profileSignOut').addEventListener('click', async () => { closeProfile(); if (state.user) await toggleLogin(); });
+    $('#profileSignOut').addEventListener('click', async () => { closeProfile(); if ($('#profilePanel').hidden && state.user) await toggleLogin(); });
     $('#profileAvatar').addEventListener('click', () => $('#photoInput').click());
     $('#photoChange').addEventListener('click', () => $('#photoInput').click());
     $('#photoInput').addEventListener('change', e => { const file = e.target.files[0]; e.target.value = ''; if (file) openCropper(file); });
     $('#photoRemove').addEventListener('click', removePhoto);
     $('#passwordForm').addEventListener('submit', changePassword);
     $('#deleteForm').addEventListener('submit', deleteAccount);
-    $('#profilePanel .pf-nav').addEventListener('click', e => { const a = e.target.closest('a'); if (!a) return; e.preventDefault(); $(a.getAttribute('href'))?.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+    $('#profileForm').addEventListener('input', markDirty); $('#profileForm').addEventListener('change', markDirty);
+    const tabs = $('#profilePanel .pf-tabs');
+    tabs.addEventListener('click', e => { const t = e.target.closest('[role=tab]'); if (t) showView(t.dataset.view); });
+    // Arrow keys move between pages (vertical tab list on desktop, horizontal row on phones).
+    tabs.addEventListener('keydown', e => {
+      const all = [...tabs.querySelectorAll('[role=tab]')]; const i = all.indexOf(document.activeElement); if (i < 0) return;
+      const step = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }[e.key];
+      const to = step ? all[(i + step + all.length) % all.length] : e.key === 'Home' ? all[0] : e.key === 'End' ? all.at(-1) : null;
+      if (to) { e.preventDefault(); showView(to.dataset.view); to.focus(); }
+    });
+    $('#profileNext').addEventListener('click', e => { const b = e.target.closest('[data-goto]'); if (b) showView(b.dataset.goto, { focusField: b.dataset.field }); });
   }
-  function renderSummary(user, profile, completeness) {
-    $('#profileName').textContent = user.name; $('#profileEmail').textContent = user.email;
-    renderAvatar(user);
-    $('#profilePercent').textContent = `${completeness.percent}%`; $('#profileMeter').style.width = `${completeness.percent}%`;
+  function showView(id, { focusField } = {}) {
+    const view = VIEWS.find(v => v.id === id) || VIEWS[0]; currentView = view.id;
+    $$('#profilePanel .pf-view').forEach(el => { el.hidden = el.id !== `pf-view-${view.id}`; });
+    $$('#profilePanel [role=tab]').forEach(t => { const on = t.dataset.view === view.id; t.setAttribute('aria-selected', String(on)); t.tabIndex = on ? 0 : -1; });
+    $('#profileViewTitle').textContent = view.heading || view.title; $('#profileViewDesc').textContent = view.desc;
+    $('#profilePanel .pf-savebar').hidden = !FORM_VIEWS.has(view.id);
+    $('#profilePanel').scrollTop = 0;
+    const panel = $(`#pf-view-${view.id}`);
+    const field = focusField && panel.querySelector(`[data-item="${CSS.escape(focusField)}"] input,[data-item="${CSS.escape(focusField)}"] select,[data-item="${CSS.escape(focusField)}"] textarea`);
+    if (field) { field.focus({ preventScroll: true }); field.scrollIntoView({ block: 'center' }); }
+  }
+  let lastCard = null;
+  const formatDate = iso => { const d = new Date(iso); return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); };
+  function englishScore(p) {
+    if (/^ielts/.test(p.englishTest || '') && p.ieltsOverall !== undefined) return `IELTS ${Number(p.ieltsOverall).toFixed(1)}`;
+    if (p.englishTest === 'toefl-ibt' && p.toeflTotal !== undefined) return `TOEFL ${p.toeflTotal}`;
+    if (p.englishTest === 'pte-academic' && p.pteOverall !== undefined) return `PTE ${p.pteOverall}`;
+    if (p.englishTest === 'duolingo' && p.duolingoOverall !== undefined) return `Duolingo ${p.duolingoOverall}`;
+    if (p.englishTest === 'moi') return 'MOI letter';
+    if (p.englishTest === 'planned') return 'Test planned';
+    return '';
+  }
+  function renderCard(user, p, completeness, card) {
+    $('#cardName').textContent = user.name;
+    const degree = p.targetDegree ? `${optLabel('targetDegree', p.targetDegree).replace(' / doctorate', '').replace(' / pathway', '')} applicant` : 'Future student';
+    $('#cardGoal').textContent = [degree, p.fieldOfStudy].filter(Boolean).join(' · ');
+    const badges = [[user.role === 'admin' ? 'Admin' : 'Student', 'role'], [user.email_verified ? 'Active' : 'Unverified', user.email_verified ? 'ok' : 'warn']];
+    $('#cardBadges').innerHTML = badges.map(([t, k]) => `<span class="id-badge id-badge-${k}">${k === 'ok' ? ICONS.check : ''}${esc(t)}</span>`).join('');
+    const intake = p.intakeSeason ? `${optLabel('intakeSeason', p.intakeSeason).split(' (')[0]} ${p.intakeYear || ''}`.trim() : '';
+    const countries = (p.preferredCountries || []).map(c => optLabel('countries', c));
+    const cells = [
+      ['phone', 'Phone', p.phone, p.phone ? `tel:${p.phone.replace(/[^+\d]/g, '')}` : ''],
+      ['mail', 'E-mail', user.email, `mailto:${user.email}`],
+      ['plane', 'Target intake', intake],
+      ['globe', 'Destinations', countries.length > 2 ? `${countries.slice(0, 2).join(', ')} +${countries.length - 2}` : countries.join(', ')],
+      ['pin', 'City', p.city],
+      ['cap', 'English', englishScore(p)],
+      ['calendar', 'Member since', card?.memberSince ? formatDate(card.memberSince) : '']
+    ];
+    $('#cardGrid').innerHTML = cells.map(([icon, label, value, href]) => `<div><dt>${ICONS[icon]}${esc(label)}</dt><dd>${value ? (href ? `<a href="${esc(href)}">${esc(value)}</a>` : esc(value)) : '<span class="id-empty">Not added</span>'}</dd></div>`).join('');
+    $('#cardNumber').textContent = card?.number || '—';
+    if (!$('#cardQr').getAttribute('src')) $('#cardQr').src = '/api/profile/qr.svg';
     const missing = completeness.missing.map(k => FIELDS[k]?.label).filter(Boolean);
-    $('#profileMissing').textContent = missing.length ? `Add: ${missing.slice(0, 4).join(', ')}${missing.length > 4 ? ` and ${missing.length - 4} more` : ''}.` : 'Complete — the counsellor can now tailor its advice to you.';
+    $('#cardStatus').className = `id-status ${missing.length ? 'id-status-todo' : 'id-status-done'}`;
+    $('#cardStatus').innerHTML = missing.length
+      ? `<div class="id-status-top"><b>Profile ${completeness.percent}% complete</b><span>${missing.length} to add</span></div><div class="pf-progress-bar"><span style="width:${completeness.percent}%"></span></div><p>Add: ${esc(missing.slice(0, 3).join(', '))}${missing.length > 3 ? ` and ${missing.length - 3} more` : ''}.</p>`
+      : `${ICONS.check}<b>Profile complete</b>`;
+  }
+  function renderSummary(user, profile, completeness, card = lastCard) {
+    lastCard = card;
+    $('#profileEyebrow').textContent = `MY PROFILE · ${user.name.toUpperCase()}`;
+    renderAvatar(user); renderCard(user, profile, completeness, card);
+    // Next steps: each missing detail links straight to the page where it is entered.
+    const steps = completeness.missing.map(k => ({ k, label: FIELDS[k]?.label, view: viewOfField(k) })).filter(s => s.label && s.view);
+    $('#profileNext').innerHTML = steps.length
+      ? `<h4>Next steps</h4>${steps.slice(0, 5).map(s => `<button type="button" data-goto="${s.view}" data-field="${esc(s.k)}"><span><b>${esc(s.label)}</b><small>Add in ${esc(VIEWS.find(v => v.id === s.view).title)}</small></span>${ICONS.arrow}</button>`).join('')}${steps.length > 5 ? `<p>${steps.length - 5} more after these.</p>` : ''}`
+      : '';
+    $('#profileNext').hidden = !steps.length;
+    // Scores at a glance; goals, intake and destinations are on the card itself.
     const p = profile; const facts = [];
-    if (p.targetDegree) facts.push(['Goal', `${optLabel('targetDegree', p.targetDegree)}${p.fieldOfStudy ? ` · ${p.fieldOfStudy}` : ''}`]);
-    if (p.preferredCountries?.length) facts.push(['Countries', p.preferredCountries.map(c => optLabel('countries', c)).join(', ')]);
-    if (p.intakeSeason) facts.push(['Intake', `${optLabel('intakeSeason', p.intakeSeason).split(' (')[0]} ${p.intakeYear || ''}`]);
-    if (/^ielts/.test(p.englishTest || '') && p.ieltsOverall !== undefined) facts.push(['IELTS', p.ieltsOverall]);
+    if (/^ielts/.test(p.englishTest || '') && p.ieltsOverall !== undefined) facts.push(['IELTS', [p.ieltsOverall, p.ieltsListening !== undefined ? `L${p.ieltsListening} R${p.ieltsReading ?? '–'} W${p.ieltsWriting ?? '–'} S${p.ieltsSpeaking ?? '–'}` : ''].filter(Boolean).join(' · ')]);
     if (p.englishTest === 'toefl-ibt' && p.toeflTotal !== undefined) facts.push(['TOEFL', p.toeflTotal]);
     if (p.englishTest === 'pte-academic' && p.pteOverall !== undefined) facts.push(['PTE', p.pteOverall]);
     if (p.englishTest === 'duolingo' && p.duolingoOverall !== undefined) facts.push(['Duolingo', p.duolingoOverall]);
     if (p.graduateTest === 'gre' && p.greQuant) facts.push(['GRE', `V${p.greVerbal ?? '–'} Q${p.greQuant}`]);
     if (p.graduateTest === 'gmat' && p.gmatTotal) facts.push(['GMAT', p.gmatTotal]);
+    if (p.graduateTest === 'gre' && p.greQuant) facts[facts.length - 1][1] += ` · AWA ${p.greWriting ?? '–'}`;
+    if (p.sscGpa !== undefined || p.hscGpa !== undefined) facts.push(['SSC / HSC', `${p.sscGpa ?? '–'} / ${p.hscGpa ?? '–'}`]);
+    if (p.oLevelResult) facts.push(['O Level', p.oLevelResult]);
+    if (p.aLevelResult) facts.push(['A Level', p.aLevelResult]);
     if (p.bachelorCgpa !== undefined) facts.push(["Bachelor's", `${p.bachelorCgpa}${p.bachelorScale ? ` / ${p.bachelorScale}` : ''}`]);
-    $('#profileFacts').innerHTML = facts.map(([k, v]) => `<div><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('') || '<div><span>Tip</span><b>Fill in your goals to see a summary here.</b></div>';
+    if (p.masterCgpa !== undefined) facts.push(["Master's", `${p.masterCgpa}${p.masterScale ? ` / ${p.masterScale}` : ''}`]);
+    $('#profileFacts').innerHTML = facts.length ? `<h4>Scores at a glance</h4>${facts.map(([k, v]) => `<div><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('')}` : '<h4>Scores at a glance</h4><div><span>Tip</span><b>Add your results and test scores below.</b></div>';
   }
-  async function openProfile() {
+  // view: which profile page to show — overview (default), account, goals, academic, tests, personal or security.
+  async function openProfile(view = 'overview') {
     if (!state.user) return showAuth('login');
+    if (typeof view !== 'string') view = 'overview';
+    // Re-opening while open with unsaved edits just switches page, keeping the edits.
+    if ($('#profilePanel') && !$('#profilePanel').hidden && dirty) { showView(view); $(`#pf-tab-${currentView}`).focus(); return; }
     let data;
     try { await loadOptions(); data = await api('/api/profile'); } catch (e) { toast(e.message); return; }
     profileMarkup();
     const values = { ...data.profile, name: data.user.name, email: data.user.email, preferred_language: data.user.preferred_language };
     const form = $('#profileForm');
-    form.innerHTML = SECTIONS.map(s => `<section class="admin-box pf-card" id="pf-sec-${s.id}"><h3>${esc(s.title)}</h3>${fieldsHtml(s.fields, values)}</section>`).join('')
-      + `<div class="pf-savebar"><span id="profileMessage" class="form-message" role="status"></span><button type="submit" class="button button-primary" id="profileSave">Save changes</button></div>`;
+    form.innerHTML = SECTIONS.map(s => `<section class="admin-box pf-card pf-view" id="pf-view-${s.id}" role="tabpanel" aria-labelledby="pf-tab-${s.id}" hidden>${fieldsHtml(s.fields, values)}</section>`).join('')
+      + `<div class="pf-savebar" hidden><span id="profileMessage" class="form-message" role="status"></span><button type="submit" class="button button-primary" id="profileSave">Save changes</button></div>`;
     const email = form.querySelector('[name=email]'); email.readOnly = true; email.closest('[data-item]').querySelector('.pf-hint')?.remove();
     email.insertAdjacentHTML('afterend', '<small class="pf-hint">Email cannot be changed here.</small>');
     form.querySelector('[data-item="phone"] input').required = false;
     bindForm(form); form.onsubmit = saveProfile;
-    renderSummary(data.user, data.profile, data.completeness);
-    $('#profilePanel').hidden = false; document.body.classList.add('drawer-open'); $('#profilePanel').scrollTop = 0;
+    dirty = false;
+    renderSummary(data.user, data.profile, data.completeness, data.card);
+    $('#profilePanel').hidden = false; document.body.classList.add('drawer-open');
+    state.profileCompleteness = data.completeness.percent;
+    showView(view);
+    $(`#pf-tab-${currentView}`).focus({ preventScroll: true });
   }
-  function closeProfile() { const p = $('#profilePanel'); if (p) p.hidden = true; document.body.classList.remove('drawer-open'); }
+  function markDirty() { if (dirty) return; dirty = true; $('#profileMessage').textContent = 'You have unsaved changes.'; }
+  function closeProfile() {
+    const p = $('#profilePanel'); if (!p || p.hidden) return;
+    if (dirty && !confirm('You have unsaved profile changes. Close without saving?')) return;
+    dirty = false; p.hidden = true; document.body.classList.remove('drawer-open');
+  }
   async function saveProfile(e) {
     e.preventDefault(); const form = e.currentTarget; clearErrors(form); $('#profileMessage').textContent = '';
-    if (!validate(form)) return;
+    if (!validate($(`#pf-view-${currentView}`) || form)) return;
     const values = readValues(form); const profile = {};
     Object.entries(values).forEach(([k, v]) => { if (!ACCOUNT_KEYS.has(k) && k !== 'email') profile[k] = v; });
     const button = $('#profileSave'); button.disabled = true;
     try {
       const data = await api('/api/profile', { method: 'PUT', body: JSON.stringify({ name: values.name, preferred_language: values.preferred_language, profile }) });
-      state.user = data.user; updateUserUI(); renderSummary(data.user, data.profile, data.completeness);
-      $('#profileMessage').textContent = data.message; toast('Profile saved.');
-    } catch (err) { $('#profileMessage').textContent = err.message; showErrors(form, err.data?.fieldErrors)?.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+      state.user = data.user; state.profileCompleteness = data.completeness.percent; updateUserUI(); renderSummary(data.user, data.profile, data.completeness);
+      dirty = false; $('#profileMessage').textContent = data.message; toast('Profile saved.');
+    } catch (err) {
+      $('#profileMessage').textContent = err.message;
+      // An error may belong to another page: switch to it before highlighting.
+      const first = Object.keys(err.data?.fieldErrors || {})[0]; const view = first && viewOfField(first);
+      if (view && view !== currentView) showView(view);
+      showErrors(form, err.data?.fieldErrors)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
     finally { button.disabled = false; }
   }
   async function changePassword(e) {
@@ -365,7 +498,7 @@
     if (!confirm('Delete your Pothik account and all saved data permanently?')) return;
     try {
       const data = await api('/api/profile', { method: 'DELETE', body: JSON.stringify({ password: form.password.value }) });
-      closeProfile(); state.user = null; state.roadmaps = []; state.chatHistory = []; updateUserUI(); toast(data.message);
+      dirty = false; closeProfile(); state.user = null; state.roadmaps = []; state.chatHistory = []; updateUserUI(); toast(data.message);
     } catch (err) { $('#deleteMessage').textContent = err.message; }
   }
 
@@ -374,7 +507,7 @@
     const el = $('#profileAvatar'); const letter = user.name.trim()[0]?.toUpperCase() || 'P';
     if (user.avatar_url) { const img = document.createElement('img'); img.src = user.avatar_url; img.alt = `${user.name}'s profile photo`; img.onerror = () => { el.textContent = letter; }; el.replaceChildren(img); }
     else el.textContent = letter;
-    $('#photoChange').textContent = user.avatar_url ? 'Change photo' : 'Upload photo';
+    $('#photoChange span').textContent = user.avatar_url ? 'Change photo' : 'Upload photo';
     $('#photoRemove').hidden = !user.avatar_url;
   }
   const VIEW = 300, OUTPUT = 512, MAX_ZOOM = 4;
