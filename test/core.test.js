@@ -251,6 +251,23 @@ test('uploaded documents are filed under the matching certificate card', () => {
   assert.deepEqual(Object.keys(DOCUMENT_SLOTS), ['ssc', 'hsc', 'bachelor', 'ielts', 'gre', 'other']);
 });
 
+test('password policy rejects common, personal and patterned passwords and accepts passphrases', () => {
+  const policy = require('../public/password-policy');
+  const me = { name: 'Rahim Uddin', email: 'rahim.uddin@example.com' };
+  const failing = (pw, ctx = me) => policy.assess(pw, ctx).checks.filter(c => !c.ok).map(c => c.id);
+  assert.deepEqual(failing('short'), ['length']);
+  assert.ok(failing('Password@2024!').includes('common'));
+  assert.ok(failing('P@ssw0rdP@ssw0rd').includes('common'));
+  assert.ok(failing('Summer2024!xx').includes('common'));
+  assert.ok(failing('Rahim-Sunrise-77').includes('personal'));
+  assert.ok(failing('dhaka-river-1234').includes('pattern'));
+  assert.ok(failing('qwertyuiop-tea').includes('pattern'));
+  assert.equal(policy.assess('739104826153', me).ok, false); // digits only: passes the checks but is too weak
+  for (const pw of ['correct horse battery staple', 'my cat eats mangoes at noon', 'বাংলাদেশ আমার সোনার দেশ']) assert.equal(policy.assess(pw, me).ok, true, pw);
+  for (let i = 0; i < 500; i++) { const s = policy.suggestPassphrase(); assert.equal(policy.assess(s, me).ok, true, s); }
+  assert.equal(policy.assess('x'.repeat(73)).checks[0].ok, false);
+});
+
 test('database initialization refuses duplicate legacy rows without rewriting the file', async t => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'pothik-migration-test-'));
   const databasePath = path.join(directory, 'pothik.sqlite');

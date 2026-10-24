@@ -17,6 +17,8 @@ const universities = require('./universities');
 const { createDatabase } = require('./db');
 const seed = require('./seed');
 const { refreshScholarships, seedOpportunities } = require('./opportunities');
+// Same rules the browser's strength meter shows, so the two never disagree.
+const passwordPolicy = require('../public/password-policy');
 
 const ROOT = path.join(__dirname, '..');
 const PUBLIC = path.join(ROOT, 'public');
@@ -231,6 +233,8 @@ async function start() {
     if (!prof.success) return res.status(400).json({ error: 'Check the highlighted fields.', fieldErrors: fieldErrors(prof.error.issues) });
     const missing = studentProfile.SIGNUP_REQUIRED.filter(k => prof.data[k] === undefined || (Array.isArray(prof.data[k]) && !prof.data[k].length));
     if (missing.length) return res.status(400).json({ error: 'Please complete the required fields.', fieldErrors: Object.fromEntries(missing.map(k => [k, 'Required'])) });
+    const strength = passwordPolicy.assess(p.data.password, { name: p.data.name, email: p.data.email });
+    if (!strength.ok) return res.status(400).json({ error: strength.message, fieldErrors: { password: strength.message } });
     const email = p.data.email.toLowerCase();
     if (PROD && process.env.REQUIRE_EMAIL_VERIFICATION !== 'false' && !isEmailConfigured()) return res.status(503).json({ error: 'Email verification is not configured yet. Please contact the site administrator.' });
     try {
@@ -299,6 +303,9 @@ async function start() {
     if (!p.success) return res.status(400).json({ error: 'Use a valid reset link and a password of at least 12 characters.' });
     const row = db.prepare("SELECT * FROM verification_tokens WHERE token_hash=? AND purpose='reset' AND expires_at>?").get(sha256(p.data.token), Date.now());
     if (!row) return res.status(400).json({ error: 'Reset link is invalid or expired. Request a new one.' });
+    const owner = db.prepare('SELECT name,email FROM users WHERE id=?').get(row.user_id) || {};
+    const strength = passwordPolicy.assess(p.data.password, owner);
+    if (!strength.ok) return res.status(400).json({ error: strength.message, fieldErrors: { password: strength.message } });
     const hash = await bcrypt.hash(p.data.password, 12);
     db.prepare('UPDATE users SET password_hash=? WHERE id=?').run(hash, row.user_id);
     db.prepare('DELETE FROM verification_tokens WHERE user_id=?').run(row.user_id);
@@ -339,6 +346,9 @@ async function start() {
     if (!p.success) return res.status(400).json({ error: 'Check the highlighted fields.', fieldErrors: fieldErrors(p.error.issues) });
     const user = db.prepare('SELECT * FROM users WHERE id=?').get(req.session.user.id);
     if (!(await bcrypt.compare(p.data.currentPassword, user.password_hash))) return res.status(400).json({ error: 'Current password is incorrect.', fieldErrors: { currentPassword: 'Incorrect password' } });
+    const strength = passwordPolicy.assess(p.data.newPassword, user);
+    if (!strength.ok) return res.status(400).json({ error: strength.message, fieldErrors: { newPassword: strength.message } });
+    if (await bcrypt.compare(p.data.newPassword, user.password_hash)) return res.status(400).json({ error: 'That’s your current password. Choose a new one.', fieldErrors: { newPassword: 'Same as your current password' } });
     db.prepare('UPDATE users SET password_hash=? WHERE id=?').run(await bcrypt.hash(p.data.newPassword, 12), user.id);
     // Sign out every other device; keep this session.
     db.prepare('DELETE FROM sessions WHERE user_id=? AND token_hash<>?').run(user.id, req.session.tokenHash);

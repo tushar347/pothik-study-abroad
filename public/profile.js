@@ -19,6 +19,7 @@
     book: icon('<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5M8 7h7"/>'),
     lock: icon('<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>'),
     arrow: icon('<path d="M5 12h14M13 6l6 6-6 6"/>'),
+    back: icon('<path d="M19 12H5M11 6l-6 6 6 6"/>'),
     chart: icon('<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'),
     upload: icon('<path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/>'),
     link: icon('<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>'),
@@ -47,8 +48,8 @@
   // Field catalogue. width: full | half | third | quarter. `options` is a key from /api/profile/options or an inline list.
   const FIELDS = {
     name: { label: 'Full name', type: 'text', required: true, autocomplete: 'name', minlength: 2, maxlength: 80, placeholder: 'As on your passport or certificates', width: 'full' },
-    email: { label: 'Email address', type: 'email', required: true, autocomplete: 'email', maxlength: 180, placeholder: 'you@example.com' },
-    password: { label: 'Password', type: 'password', required: true, minlength: 12, maxlength: 72, autocomplete: 'new-password', placeholder: 'At least 12 characters', hint: 'Use a long, unique password.' },
+    email: { label: 'Email address', type: 'email', required: true, autocomplete: 'email', maxlength: 180, placeholder: 'you@example.com', width: 'full' },
+    password: { label: 'Password', type: 'password', required: true, maxlength: 72, autocomplete: 'new-password', placeholder: 'A short sentence works well', width: 'full' },
     phone: { label: 'Mobile / WhatsApp number', type: 'tel', required: true, autocomplete: 'tel', placeholder: '+880 1XXX-XXXXXX', pattern: '\\+?[0-9 \\(\\)\\-]{7,20}' }, // escaped for the `v` regex flag browsers use for pattern=
     preferred_language: { label: 'Preferred language', type: 'select', required: true, options: [['en', 'English'], ['bn', 'বাংলা (Bangla)']], hint: 'The AI Counsellor replies in this language.' },
 
@@ -217,25 +218,29 @@
       if (f?.type === 'chips' && f.required && !el.querySelector('input:checked')) {
         el.classList.add('pf-invalid'); el.querySelector('.pf-error').textContent = 'Choose at least one'; el.scrollIntoView({ block: 'center', behavior: 'smooth' }); return false;
       }
-      for (const input of el.querySelectorAll('input,select,textarea')) if (!input.disabled && !input.checkValidity()) { input.reportValidity(); return false; }
+      for (const input of el.querySelectorAll('input,select,textarea')) {
+        if (input.disabled || input.checkValidity()) continue;
+        // Password fields with a strength meter explain themselves inline rather than in a browser bubble.
+        if (input._meter) { el.classList.add('pf-invalid'); el.querySelector('.pf-error').textContent = input.value ? 'Not strong enough yet — the checklist above shows what to change.' : 'Choose a password to protect your account.'; input.focus(); el.scrollIntoView({ block: 'center', behavior: 'smooth' }); return false; }
+        input.reportValidity(); return false;
+      }
     }
     return true;
   }
 
-  // ---------- Signup wizard ----------
+  // ---------- Signup wizard (back face of the auth card in index.html) ----------
   let step = 0;
   function signupMarkup() {
-    if ($('#signupModal')) return;
-    document.body.insertAdjacentHTML('beforeend', `<div class="modal-backdrop" id="signupModal" hidden><section class="auth-modal signup-modal" role="dialog" aria-modal="true" aria-labelledby="signupTitle">
-      <button class="modal-close" type="button" data-close-signup aria-label="Close">×</button>
-      <div class="auth-brand"><img class="auth-logo" src="/assets/brand/pothik-logo-card.png" alt="Pothik — Your path to a brighter tomorrow" width="360" height="182"></div>
-      <div class="pf-progress"><div class="pf-progress-meta"><span id="signupStepLabel"></span><button type="button" class="text-link" data-switch-login>Already have an account? Log in</button></div><div class="pf-progress-bar"><span id="signupProgress"></span></div></div>
+    const face = $('#signupFace'); if (face.childElementCount) return;
+    face.innerHTML = `<div class="auth-face-inner">
+      <button class="nm-close" type="button" data-close-auth aria-label="Close">×</button>
+      <div class="nm-logo nm-logo-sm">${ICONS.user}</div>
+      <div class="pf-progress"><div class="pf-progress-meta"><span id="signupStepLabel"></span></div><div class="pf-progress-bar"><span id="signupProgress"></span></div></div>
       <h2 id="signupTitle"></h2><p class="auth-subtitle" id="signupSub"></p>
       <form id="signupForm" novalidate></form>
+      <div class="nm-switch"><span>Already have an account? Log in</span><button type="button" class="nm-switch-btn" data-flip="login" aria-label="Back to log in">${ICONS.back}</button></div>
       <div class="auth-legal">Never enter passport, NID or bank account numbers. Pothik only stores what you see here, and you can delete your account at any time from your profile.</div>
-    </section></div>`);
-    $('#signupModal').addEventListener('click', e => { if (e.target.id === 'signupModal' || e.target.closest('[data-close-signup]')) closeSignup(); });
-    $('[data-switch-login]').addEventListener('click', () => { closeSignup(); showAuth('login'); });
+    </div>`;
   }
   function renderStep() {
     const form = $('#signupForm');
@@ -244,25 +249,31 @@
     $('#signupStepLabel').textContent = `Step ${step + 1} of ${STEPS.length}`;
     $('#signupProgress').style.width = `${((step + 1) / STEPS.length) * 100}%`;
     $('#signupBack').hidden = step === 0;
-    $('#signupShowPassword').closest('label').hidden = step !== 0;
-    $('#signupNext').innerHTML = step === STEPS.length - 1 ? 'Create account <span>↗</span>' : 'Continue <span>→</span>';
-    $('#signupModal .auth-modal').scrollTop = 0;
-    form.querySelector(`fieldset[data-step="${step}"] input:not([type=checkbox]),fieldset[data-step="${step}"] select`)?.focus({ preventScroll: true });
+    $('#signupNext').textContent = step === STEPS.length - 1 ? 'Create account' : 'Continue';
+    $('#signupFace').scrollTop = 0;
+    focusStep();
   }
+  const focusStep = () => $('#signupForm').querySelector(`fieldset[data-step="${step}"] input:not([type=checkbox]),fieldset[data-step="${step}"] select`)?.focus({ preventScroll: true });
   async function openSignup() {
     try { await loadOptions(); } catch (e) { toast('Could not load the signup form. Check that the server is running.'); return; }
     signupMarkup();
     const form = $('#signupForm');
     form.innerHTML = STEPS.map((s, i) => `<fieldset data-step="${i}" hidden>${fieldsHtml(s.fields)}</fieldset>`).join('')
-      + `<label class="remember-label pf-showpass"><input type="checkbox" id="signupShowPassword"> Show password</label>`
-      + `<div class="pf-actions"><button type="button" class="button pf-back" id="signupBack">← Back</button><button type="submit" class="button button-primary" id="signupNext"></button></div><div id="signupMessage" class="form-message" role="status"></div>`;
+      + `<div class="pf-actions"><button type="button" class="nm-button nm-button-quiet" id="signupBack">← Back</button><button type="submit" class="nm-button" id="signupNext"></button></div><div id="signupMessage" class="form-message" role="status"></div>`;
+    // Same show/hide eye as the log-in face (handled by the auth modal's click listener in app.js).
+    const password = form.querySelector('[name=password]'); const wrap = document.createElement('span');
+    wrap.className = 'nm-control'; password.before(wrap); wrap.append(password);
+    wrap.insertAdjacentHTML('beforeend', `<button type="button" class="nm-eye" data-toggle-password aria-label="Show password" aria-pressed="false">${$('#loginFace .nm-eye').innerHTML}</button>`);
+    const nameInput = form.querySelector('[name=name]'), emailInput = form.querySelector('[name=email]');
+    attachPasswordMeter(password, () => ({ name: nameInput.value, email: emailInput.value }), [nameInput, emailInput]);
     bindForm(form);
-    $('#signupShowPassword').addEventListener('change', e => { form.querySelector('[name=password]').type = e.target.checked ? 'text' : 'password'; });
     $('#signupBack').addEventListener('click', () => { step = Math.max(0, step - 1); renderStep(); });
     form.onsubmit = submitSignup;
-    step = 0; $('#signupModal').hidden = false; document.body.classList.add('drawer-open'); renderStep();
+    const wasOpen = !$('#authModal').hidden;
+    step = 0; renderStep(); openAuthModal();
+    await setAuthFace('signup', wasOpen); focusStep();
   }
-  function closeSignup() { const m = $('#signupModal'); if (m) m.hidden = true; document.body.classList.remove('drawer-open'); }
+  const closeSignup = () => closeAuth();
   const stepOf = name => STEPS.findIndex(s => s.fields.includes(name));
   async function submitSignup(e) {
     e.preventDefault();
@@ -279,8 +290,8 @@
         $('#signupMessage').innerHTML = esc(data.message) + (data.developmentVerificationUrl ? `<br><a class="text-link" href="${esc(data.developmentVerificationUrl)}">Verify this development account ↗</a>` : '');
         return;
       }
-      state.user = data.user; await loadRoadmaps(); updateUserUI(); closeSignup();
-      toast(`Welcome to Pothik, ${state.user.name.split(' ')[0]}! Your profile is saved.`);
+      state.user = data.user; updateUserUI(); closeSignup(); loadRoadmaps().catch(() => {});
+      greetUser(state.user, 'signup');
     } catch (err) {
       $('#signupMessage').textContent = err.message;
       const errors = err.data?.fieldErrors || {};
@@ -378,7 +389,7 @@
           </section>
           <form id="profileForm" novalidate></form>
           <section class="admin-box pf-card pf-view" id="pf-view-security" role="tabpanel" aria-labelledby="pf-tab-security" hidden><h3>Change password</h3>
-            <form id="passwordForm" novalidate><div class="pf-grid">${['currentPassword', 'newPassword'].map(n => `<label class="pf-field pf-half" data-item="${n}"><span class="pf-label">${n === 'currentPassword' ? 'Current password' : 'New password'}</span><input type="password" name="${n}" required ${n === 'newPassword' ? 'minlength="12" autocomplete="new-password"' : 'autocomplete="current-password"'} maxlength="72"><small class="pf-error"></small></label>`).join('')}</div>
+            <form id="passwordForm" novalidate><div class="pf-grid">${['currentPassword', 'newPassword'].map(n => `<label class="pf-field pf-half" data-item="${n}"><span class="pf-label">${n === 'currentPassword' ? 'Current password' : 'New password'}</span><input type="password" name="${n}" required ${n === 'newPassword' ? 'autocomplete="new-password"' : 'autocomplete="current-password"'} maxlength="72"><small class="pf-error"></small></label>`).join('')}</div>
               <button type="submit" class="button button-primary">Change password</button><div class="form-message" id="passwordMessage" role="status"></div></form>
             <details class="pf-danger"><summary>Delete my account</summary><p>This permanently deletes your account, profile and saved roadmaps. It cannot be undone.</p>
               <form id="deleteForm"><label class="pf-field"><span class="pf-label">Confirm with your password</span><input type="password" name="password" required autocomplete="current-password" maxlength="72"></label><button type="submit" class="button pf-delete">Delete account permanently</button><div class="form-message" id="deleteMessage" role="status"></div></form></details>
@@ -392,6 +403,7 @@
     $('#photoInput').addEventListener('change', e => { const file = e.target.files[0]; e.target.value = ''; if (file) openCropper(file); });
     $('#photoRemove').addEventListener('click', removePhoto);
     $('#passwordForm').addEventListener('submit', changePassword);
+    attachPasswordMeter($('#passwordForm [name=newPassword]'), () => ({ name: state.user?.name, email: state.user?.email }));
     $('#deleteForm').addEventListener('submit', deleteAccount);
     $('#profileForm').addEventListener('input', markDirty); $('#profileForm').addEventListener('change', markDirty);
     const tabs = $('#profilePanel .pf-tabs');
@@ -566,7 +578,7 @@
     if (!validate(form)) return;
     try {
       const data = await api('/api/profile/password', { method: 'POST', body: JSON.stringify({ currentPassword: form.currentPassword.value, newPassword: form.newPassword.value }) });
-      form.reset(); $('#passwordMessage').textContent = data.message;
+      form.reset(); form.newPassword._meter?.update(); $('#passwordMessage').textContent = data.message;
     } catch (err) { $('#passwordMessage').textContent = err.message; showErrors(form, err.data?.fieldErrors); }
   }
   async function deleteAccount(e) {

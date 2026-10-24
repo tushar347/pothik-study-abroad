@@ -8,7 +8,98 @@ function flagHtml(slugOrCode, fallback = '') {
   const code = FLAG_CODES[slugOrCode] || (/^[a-z]{2}$/i.test(slugOrCode || '') && Object.values(FLAG_CODES).includes(String(slugOrCode).toLowerCase()) ? String(slugOrCode).toLowerCase() : '');
   return code ? `<img class="flag-img" src="/assets/flags/${code}.svg" alt="" width="20" height="15">` : esc(fallback);
 }
-function toast(message) { const t = $('#toast'); t.textContent = message; t.classList.add('show'); clearTimeout(window._toastTimer); window._toastTimer = setTimeout(() => t.classList.remove('show'), 3500); }
+const TOAST_ICONS = {
+  sunrise: '<path d="M12 3v3M5.6 7.6 7 9M18.4 7.6 17 9M3 17h18M7 17a5 5 0 0 1 10 0M5 21h14"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  sunset: '<path d="M12 3v6M9 6l3 3 3-3M3 17h18M7 17a5 5 0 0 1 10 0M5 21h14"/>',
+  moon: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+  plane: '<path d="M2 16l20-7-4-2-6 2-6-4-2 1 4 5-4 2-2-1-1 1z"/><path d="M3 21h18"/>',
+  compass: '<circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/>',
+  key: '<circle cx="8" cy="15" r="4"/><path d="m11 12 9-9M17 6l3 3M14 9l2 2"/>'
+};
+const strokeIcon = d => `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+// toast('Saved.') for a one-liner; toast(text, { title, icon }) for a titled card with an icon from TOAST_ICONS.
+function toast(message, { title = '', icon = '' } = {}) {
+  const t = $('#toast'); t.classList.toggle('toast-rich', !!title);
+  if (title) t.innerHTML = `${TOAST_ICONS[icon] ? `<span class="toast-icon">${strokeIcon(TOAST_ICONS[icon])}</span>` : ''}<span class="toast-text"><b>${esc(title)}</b><span>${esc(message)}</span></span>`;
+  else t.textContent = message;
+  t.classList.add('show'); clearTimeout(window._toastTimer); window._toastTimer = setTimeout(() => t.classList.remove('show'), title ? 5200 : 3500);
+}
+// Greetings for signing in, joining and signing out — by time of day, in the student's chosen language.
+const GREETINGS = {
+  en: {
+    hello: { morning: 'Good morning', afternoon: 'Good afternoon', evening: 'Good evening' },
+    night: n => `Still up, ${n}?`,
+    welcome: ['Your roadmap is right where you left it.', 'Ready for the next step towards your offer letter?', 'Every great journey is a series of small steps — let’s take today’s.', 'Your study-abroad plans missed you.'],
+    nightLine: 'Big plans are often made after midnight. Let’s make yours count.',
+    bye: n => `Safe travels, ${n}!`,
+    byeLines: ['You’re signed out. Your roadmap and profile are safely saved for your return.', 'Signed out securely. We’ll keep your plans warm until you’re back.', 'See you on the road again soon — everything is saved.'],
+    join: n => `Welcome aboard, ${n}!`, joinLine: 'Your profile is saved. Let’s plan your journey abroad, one step at a time.'
+  },
+  bn: {
+    hello: { morning: 'শুভ সকাল', afternoon: 'শুভ দুপুর', evening: 'শুভ সন্ধ্যা' },
+    night: n => `এখনও জেগে আছেন, ${n}?`,
+    welcome: ['আপনার রোডম্যাপ যেখানে রেখে গিয়েছিলেন, সেখানেই আছে।', 'অফার লেটারের পথে পরের ধাপের জন্য প্রস্তুত?', 'প্রতিটি বড় যাত্রা ছোট ছোট পদক্ষেপে গড়া — চলুন আজকেরটা নিই।'],
+    nightLine: 'বড় পরিকল্পনাগুলো প্রায়ই রাত জেগেই হয়। চলুন আপনারটা সফল করি।',
+    bye: n => `শুভ যাত্রা, ${n}!`,
+    byeLines: ['আপনি সাইন আউট করেছেন। আপনার রোডম্যাপ ও প্রোফাইল নিরাপদে সংরক্ষিত আছে।', 'নিরাপদে সাইন আউট হয়েছে। আপনি ফিরে আসা পর্যন্ত আপনার পরিকল্পনা আমরা যত্নে রাখব।'],
+    join: n => `পথিকে স্বাগতম, ${n}!`, joinLine: 'আপনার প্রোফাইল সংরক্ষিত হয়েছে। চলুন, ধাপে ধাপে বিদেশে পড়ার যাত্রা পরিকল্পনা করি।'
+  }
+};
+function greetUser(user, kind) {
+  const g = GREETINGS[user?.preferred_language === 'bn' ? 'bn' : 'en'];
+  const name = (user?.name || '').trim().split(/\s+/)[0] || 'traveller';
+  const pick = list => list[Math.floor(Math.random() * list.length)];
+  if (kind === 'logout') return toast(pick(g.byeLines), { title: g.bye(name), icon: 'plane' });
+  if (kind === 'signup') return toast(g.joinLine, { title: g.join(name), icon: 'compass' });
+  const h = new Date().getHours();
+  const part = h < 5 || h >= 22 ? 'night' : h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening';
+  if (part === 'night') return toast(g.nightLine, { title: g.night(name), icon: 'moon' });
+  toast(pick(g.welcome), { title: `${g.hello[part]}, ${name}!`, icon: { morning: 'sunrise', afternoon: 'sun', evening: 'sunset' }[part] });
+}
+
+// Live strength meter, checklist and passphrase helper under a "new password" field. Rules: password-policy.js.
+function attachPasswordMeter(input, context = () => ({}), watch = []) {
+  if (input._meter) return input._meter;
+  const P = window.PothikPassword; const idle = `${P.MIN_LENGTH}+ characters. A short sentence makes a great password.`;
+  const meter = document.createElement('div'); meter.className = 'pw-meter'; meter.dataset.level = '0';
+  meter.innerHTML = `<div class="pw-meter-head"><span class="pw-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="pw-verdict"><b aria-live="polite">Start typing</b><small>${esc(idle)}</small></span></div>
+    <ul class="pw-checks">${P.assess('').checks.map(c => `<li data-check="${c.id}"><span class="pw-tick" aria-hidden="true"></span><span>${esc(c.label)}</span>${c.progress ? '<small class="pw-count"></small>' : ''}</li>`).join('')}</ul>
+    <button type="button" class="pw-suggest">${strokeIcon(TOAST_ICONS.key)}<span>Suggest a strong passphrase</span></button>`;
+  (input.closest('.nm-field, .nm-control') || input).after(meter);
+  const update = () => {
+    if (meter.hidden) { input.setCustomValidity(''); return; }
+    const r = P.assess(input.value, context()); const typed = !!input.value;
+    meter.dataset.level = typed ? r.level : 0; meter.classList.toggle('is-ok', r.ok);
+    meter.querySelector('.pw-verdict b').textContent = typed ? r.name : 'Start typing';
+    meter.querySelector('.pw-verdict small').textContent = typed ? (r.ok ? r.hint : r.message) : idle;
+    r.checks.forEach(c => { const li = meter.querySelector(`[data-check="${c.id}"]`); li.classList.toggle('ok', typed && c.ok); const n = li.querySelector('.pw-count'); if (n) n.textContent = c.progress; });
+    input.setCustomValidity(r.ok ? '' : r.message || 'Choose a stronger password.');
+    const field = input.closest('.pf-invalid');
+    if (r.ok && field) { field.classList.remove('pf-invalid'); const err = field.querySelector('.pf-error'); if (err) err.textContent = ''; }
+  };
+  input.addEventListener('input', update); watch.forEach(w => w?.addEventListener('input', update));
+  meter.querySelector('.pw-suggest').addEventListener('click', () => {
+    input.value = P.suggestPassphrase(); input.type = 'text';
+    const eye = input.parentElement.querySelector('[data-toggle-password]');
+    if (eye) { eye.setAttribute('aria-pressed', 'true'); eye.setAttribute('aria-label', 'Hide password'); }
+    input.dispatchEvent(new Event('input', { bubbles: true })); input.focus();
+    toast('Save it in your password manager or somewhere safe — it’s strong and easy to type.', { title: 'Your passphrase is ready', icon: 'key' });
+  });
+  input._meter = { el: meter, update }; update();
+  return input._meter;
+}
+// Caps Lock warning under any password field (sign in, signup, reset, profile).
+function checkCapsLock(e) {
+  const input = e.target;
+  if (!(input instanceof HTMLInputElement) || !/password$/.test(input.autocomplete || '')) return;
+  const on = e.type !== 'focusout' && e.getModifierState('CapsLock');
+  if (e.type !== 'focusout') state.capsOn = on;
+  const host = input.closest('.nm-field, .nm-control') || input;
+  let warn = host.nextElementSibling?.classList.contains('caps-warning') ? host.nextElementSibling : null;
+  if (on && !warn) { warn = document.createElement('small'); warn.className = 'caps-warning'; warn.setAttribute('role', 'status'); warn.textContent = '⇪ Caps Lock is on'; host.after(warn); }
+  if (warn) warn.hidden = !on;
+}
 async function api(url, options = {}) {
   const headers = { ...(options.headers || {}) };
   if (!(options.body instanceof FormData) && options.body !== undefined) headers['Content-Type'] = 'application/json';
@@ -191,58 +282,119 @@ function renderRoadmaps() {
   }));
 }
 async function loadRoadmaps() { if (!state.user) { state.roadmaps = []; renderRoadmaps(); return; } const d = await api('/api/roadmaps'); state.roadmaps = d.roadmaps; renderRoadmaps(); setText('#savedRoadmapCount', `${state.roadmaps.length} saved`); }
-function showAuth(mode = 'login') {
-  // Account creation is the multi-step student signup in profile.js.
-  if (mode === 'signup') { closeAuth(); openSignup(); return; }
-  state.authMode = mode; $('#authModal').hidden = false; $('#authMessage').textContent = '';
-  $('#authTabs').hidden = !['login', 'signup'].includes(mode); $('#authNameField').hidden = mode !== 'signup'; $('#authNameField input').required = mode === 'signup';
-  $('#authForm [name=email]').required = mode !== 'reset';
-  $('#authForm [name=email]').closest('label').hidden = mode === 'reset';
-  $('#authForm [name=password]').closest('label').hidden = mode === 'forgot';
-  $('#authForm [name=password]').required = mode !== 'forgot';
-  $('#authExtra');
-  $('.auth-extra').hidden = !['login', 'signup'].includes(mode);
-  $('#authTitle').textContent = ({ login: 'Welcome back.', signup: 'Create your account.', forgot: 'Reset your password.', reset: 'Choose a new password.' })[mode] || 'Welcome back.';
-  $('#authSubtitle').textContent = ({ login: 'Sign in to access your saved roadmap and practice progress.', signup: 'Create a private workspace for your study-abroad plan.', forgot: 'We will provide a reset link if the account exists.', reset: 'Choose a strong password you have not used elsewhere.' })[mode] || '';
-  $('#authSubmit').innerHTML = ({ login: 'Log in ↗', signup: 'Create account ↗', forgot: 'Send reset link ↗', reset: 'Update password ↗' })[mode] || 'Continue';
-  $('#forgotPassword').hidden = mode !== 'login';
-  $('#authForm [name=password]').autocomplete = mode === 'signup' || mode === 'reset' ? 'new-password' : 'current-password';
-  if (mode === 'reset') $('#authForm [name=password]').placeholder = 'At least 12 characters';
-  else $('#authForm [name=password]').placeholder = 'At least 12 characters';
-  const focusName = mode === 'signup' ? 'name' : mode === 'forgot' ? 'email' : 'password';
-  $(`#authForm [name="${focusName}"]`)?.focus();
-}
-function closeAuth() { $('#authModal').hidden = true; }
-async function submitAuth(e) {
-  e.preventDefault(); const form = e.currentTarget; const fd = new FormData(form); const button = $('#authSubmit'); button.disabled = true; $('#authMessage').textContent = '';
+// The auth modal is a flip card: log in on the front, the student signup wizard (profile.js) on the back.
+function openAuthModal() { $('#authModal').hidden = false; document.body.classList.add('drawer-open'); }
+// Only one face is in the page at a time. The flip turns the card edge-on, swaps faces (and size) while it is
+// invisible, then springs back — transform-only animations, so nothing is re-laid out or repainted per frame.
+let authFlipping = false;
+async function setAuthFace(face, animate = false) {
+  const card = $('#authCard'); const toSignup = face === 'signup';
+  const swap = () => {
+    card.classList.toggle('is-signup', toSignup);
+    $('#loginFace').hidden = toSignup; $('#signupFace').hidden = !toSignup;
+    card.setAttribute('aria-labelledby', toSignup ? 'signupTitle' : 'authTitle');
+  };
+  if (!animate || card.classList.contains('is-signup') === toSignup || matchMedia('(prefers-reduced-motion: reduce)').matches) { swap(); return; }
+  authFlipping = true;
+  const turn = deg => `perspective(1600px) rotateY(${deg}deg)`; const dir = toSignup ? 1 : -1;
   try {
-    if (state.authMode === 'forgot') {
+    await card.animate([{ transform: turn(0) }, { transform: turn(90 * dir) }], { duration: 170, easing: 'cubic-bezier(.55,0,.85,.35)' }).finished;
+    swap();
+    await card.animate([{ transform: turn(-90 * dir) }, { transform: turn(0) }], { duration: 340, easing: 'cubic-bezier(.34,1.4,.64,1)' }).finished;
+  } finally { authFlipping = false; }
+}
+function togglePasswordVisibility(button) {
+  const input = button.parentElement.querySelector('input'); const show = input.type === 'password';
+  input.type = show ? 'text' : 'password';
+  button.setAttribute('aria-pressed', String(show)); button.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+}
+async function showAuth(mode = 'login') {
+  // Account creation is the multi-step student signup in profile.js, on the back of the card.
+  if (mode === 'signup') { openSignup(); return; }
+  const wasOpen = !$('#authModal').hidden;
+  state.authMode = mode; openAuthModal(); $('#authMessage').textContent = '';
+  const email = $('#authForm [name=email]'), password = $('#authForm [name=password]');
+  email.required = mode !== 'reset'; email.closest('.nm-field').hidden = mode === 'reset';
+  password.required = mode !== 'forgot'; password.closest('.nm-field').hidden = mode === 'forgot';
+  password.autocomplete = mode === 'reset' ? 'new-password' : 'current-password';
+  password._meter.el.hidden = mode !== 'reset'; password._meter.update();
+  $('.auth-extra').hidden = mode !== 'login';
+  $('#authSwitch').hidden = mode !== 'login'; $('#authBackToLogin').hidden = mode !== 'forgot';
+  $('#authTitle').textContent = ({ login: 'Welcome back.', forgot: 'Reset your password.', reset: 'Choose a new password.' })[mode] || 'Welcome back.';
+  $('#authSubtitle').textContent = ({ login: 'Sign in to access your saved roadmap and practice progress.', forgot: 'We will provide a reset link if the account exists.', reset: 'Choose a strong password you have not used elsewhere.' })[mode] || '';
+  $('#authSubmit').textContent = ({ login: 'Log in', forgot: 'Send reset link', reset: 'Update password' })[mode] || 'Continue';
+  await setAuthFace('login', wasOpen);
+  (mode === 'forgot' ? email : mode === 'reset' || email.value ? password : email).focus({ preventScroll: true });
+}
+function closeAuth() {
+  const modal = $('#authModal'); if (modal.hidden) return;
+  modal.hidden = true; document.body.classList.remove('drawer-open');
+}
+// Messages inside the card instead of browser bubbles. tone: bad | warn | info | ok. action: { mode, label } opens that card mode.
+const ALERT_ICONS = {
+  bad: '<circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3 20 3M16.5 6.5l3 3M13.8 9.2l2 2"/>',
+  warn: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/>',
+  ok: '<path d="m5 12 5 5 9-10"/>'
+};
+function authAlert(tone, title, text, { action, html = '' } = {}) {
+  $('#authMessage').innerHTML = `<div class="auth-alert auth-alert-${tone}" role="${tone === 'ok' ? 'status' : 'alert'}"><span class="auth-alert-icon">${strokeIcon(ALERT_ICONS[tone])}</span><div><b>${esc(title)}</b><span>${esc(text)}</span>${html}${action ? `<button type="button" class="text-link" data-auth-action="${action.mode}">${esc(action.label)} →</button>` : ''}</div></div>`;
+}
+const nudge = el => { if (!matchMedia('(prefers-reduced-motion: reduce)').matches) el.animate([0, -7, 7, -4, 4, 0].map(x => ({ transform: `translateX(${x}px)` })), { duration: 380, easing: 'ease-out' }); };
+// Checks before sending, so the student sees a friendly line instead of the browser's validation bubble.
+function authFormProblem(mode, email, password) {
+  if (mode !== 'reset' && !email.value.trim()) return [email, 'info', 'Who’s travelling today?', 'Enter the email address you signed up with.'];
+  if (mode !== 'reset' && !email.checkValidity()) return [email, 'info', 'That email looks incomplete', 'It should look like name@example.com.'];
+  if (mode === 'login' && !password.value) return [password, 'info', 'Don’t forget your key', 'Enter your password to continue.'];
+  if (mode === 'reset') { const r = PothikPassword.assess(password.value); if (!r.ok) return [password, 'warn', 'Not quite strong enough yet', r.message]; }
+  return null;
+}
+function loginFailed(err) {
+  const caps = state.capsOn ? ' Caps Lock is on — that may be it.' : '';
+  if (!err.status) return authAlert('warn', 'Pothik is out of reach', 'Check your internet connection, then try again.');
+  if (err.status === 429) return authAlert('warn', 'Let’s take a short breather', 'Too many sign-in attempts. For your safety, try again in 15 minutes — or reset your password now.', { action: { mode: 'forgot', label: 'Reset my password' } });
+  if (err.status === 403) return authAlert('info', 'One last step', err.message);
+  if (err.status !== 401) return authAlert('bad', 'Something went wrong', err.message);
+  // Never says which of the two was wrong: that would tell an attacker which emails have accounts.
+  const n = state.loginFailures = (state.loginFailures || 0) + 1;
+  nudge($('#authPassword').closest('.nm-field'));
+  if (n === 1) return authAlert('bad', 'That key didn’t turn the lock', `The email or password doesn’t match our records. Passwords are case-sensitive.${caps}`);
+  if (n === 2) return authAlert('bad', 'Still not the right key', `Tap the eye to see what you typed, and check the email for typos.${caps}`);
+  authAlert('bad', 'Lost your key?', 'It happens to every traveller. We’ll email you a fresh one — it takes a minute.', { action: { mode: 'forgot', label: 'Reset my password' } });
+}
+async function submitAuth(e) {
+  e.preventDefault(); const form = e.currentTarget; const fd = new FormData(form); const button = $('#authSubmit'); $('#authMessage').textContent = '';
+  const mode = state.authMode; const problem = authFormProblem(mode, form.email, form.password);
+  if (problem) { const [field, ...alert] = problem; authAlert(...alert); nudge(field.closest('.nm-field')); field.focus(); return; }
+  button.disabled = true;
+  try {
+    if (mode === 'forgot') {
       const data = await api('/api/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email: fd.get('email') }) });
-      $('#authMessage').textContent = data.message + (data.developmentResetUrl ? `\nDevelopment reset link: ${data.developmentResetUrl}` : '');
-      if (data.developmentResetUrl) $('#authMessage').innerHTML = `${esc(data.message)}<br><a class="text-link" href="${esc(data.developmentResetUrl)}">Open development reset link ↗</a>`;
+      authAlert('ok', 'Check your inbox', data.message, { html: data.developmentResetUrl ? `<a class="text-link" href="${esc(data.developmentResetUrl)}">Open development reset link ↗</a>` : '' });
       return;
     }
-    if (state.authMode === 'reset') {
+    if (mode === 'reset') {
       const token = new URLSearchParams(location.search).get('reset') || '';
       const data = await api('/api/auth/reset-password', { method: 'POST', body: JSON.stringify({ token, password: fd.get('password') }) });
-      history.replaceState({}, '', location.pathname); state.authMode = 'login'; showAuth('login'); $('#authMessage').textContent = data.message; return;
+      history.replaceState({}, '', location.pathname); form.password.value = ''; await showAuth('login');
+      authAlert('ok', 'New key, same journey', data.message); return;
     }
-    const payload = { email: fd.get('email'), password: fd.get('password') };
-    if (state.authMode === 'signup') payload.name = fd.get('name');
-    const data = await api(`/api/auth/${state.authMode === 'signup' ? 'signup' : 'login'}`, { method: 'POST', body: JSON.stringify(payload) });
+    const data = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ email: fd.get('email'), password: fd.get('password') }) });
     if (data.verificationRequired) {
-      $('#authMessage').textContent = data.message;
-      if (data.developmentVerificationUrl) $('#authMessage').innerHTML = `${esc(data.message)}<br><a class="text-link" href="${esc(data.developmentVerificationUrl)}">Verify this development account ↗</a>`;
+      authAlert('info', 'One last step', data.message, { html: data.developmentVerificationUrl ? `<a class="text-link" href="${esc(data.developmentVerificationUrl)}">Verify this development account ↗</a>` : '' });
       return;
     }
-    state.user = data.user; await loadRoadmaps(); updateUserUI(); closeAuth(); toast(`Welcome back${state.user.name ? ', ' + state.user.name.split(' ')[0] : ''}. Open your profile from the avatar at the top.`);
+    state.user = data.user; state.loginFailures = 0; updateUserUI(); form.reset(); closeAuth(); loadRoadmaps().catch(() => {}); greetUser(state.user, 'login');
     if (state.openProfileAfterLogin) { state.openProfileAfterLogin = false; openProfile(); }
-  } catch (err) { $('#authMessage').textContent = err.message; }
-  finally { button.disabled = false; }
+  } catch (err) {
+    if (mode === 'login') loginFailed(err);
+    else authAlert(err.status === 429 ? 'warn' : 'bad', err.status === 429 ? 'Let’s take a short breather' : 'That didn’t work', err.message);
+  } finally { button.disabled = false; }
 }
 async function toggleLogin() {
   if (!state.user) { showAuth('login'); return; }
-  try { await api('/api/auth/logout', { method: 'POST', body: '{}' }); state.user = null; state.roadmaps = []; state.profileCompleteness = undefined; updateUserUI(); toast('You have signed out.'); }
+  const leaving = state.user;
+  try { await api('/api/auth/logout', { method: 'POST', body: '{}' }); state.user = null; state.roadmaps = []; state.profileCompleteness = undefined; updateUserUI(); greetUser(leaving, 'logout'); }
   catch (e) { toast(e.message); }
 }
 function appendChat(role, text, sources = [], loading = false) {
@@ -396,10 +548,16 @@ function bindEvents() {
     if (!state.user || !['ArrowDown', 'ArrowUp'].includes(e.key)) return;
     e.preventDefault(); openAccountMenu(e.key === 'ArrowUp' ? 'last' : 'first');
   });
-  $('#closeAuth').addEventListener('click', closeAuth); $('#authModal').addEventListener('click', e => { if (e.target.id === 'authModal') closeAuth(); });
-  $('#authTabs').querySelectorAll('[data-auth-tab]').forEach(b => b.addEventListener('click', () => showAuth(b.dataset.authTab)));
+  // One listener for both faces of the card: close, flip and show/hide password.
+  $('#authModal').addEventListener('click', e => {
+    if (e.target.id === 'authModal' || e.target.closest('[data-close-auth]')) { closeAuth(); return; }
+    const flip = e.target.closest('[data-flip]'); if (flip) { if (!authFlipping) showAuth(flip.dataset.flip); return; }
+    const action = e.target.closest('[data-auth-action]'); if (action) { showAuth(action.dataset.authAction); return; }
+    const eye = e.target.closest('[data-toggle-password]'); if (eye) togglePasswordVisibility(eye);
+  });
+  attachPasswordMeter($('#authPassword')); // shown only when choosing a new password (reset mode)
+  ['keydown', 'keyup', 'focusout'].forEach(type => document.addEventListener(type, checkCapsLock, true));
   $('#authForm').addEventListener('submit', submitAuth); $('#forgotPassword').addEventListener('click', () => showAuth('forgot'));
-  $('#showPassword').addEventListener('change', e => { $('#authForm [name=password]').type = e.target.checked ? 'text' : 'password'; });
   $('#counsellorLauncher').addEventListener('click', () => $('#counsellorDrawer').classList.contains('open') ? closeCounsellor() : openCounsellor());
   $('#openCounsellor').addEventListener('click', openCounsellor); $('#closeCounsellor').addEventListener('click', closeCounsellor);
   $('#closeNudge').addEventListener('click', () => { $('#counsellorNudge').hidden = true; });

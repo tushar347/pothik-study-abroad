@@ -10,7 +10,7 @@
     "seed": "node src/seed.js",
     "test": "node --test",
     "embed:resources": "node scripts/embed-resources.js",
-    "check": "node --check src/server.js && node --check src/ai.js && node --check src/profile.js && node --check src/admissions.js &&node --check public/profile.js && node --check public/combobox.js && node --check src/universities.js && node --check src/browser.js && node --check src/db.js && node --check src/seed.js && node --check src/opportunities.js && node --check public/app.js && node --check pothik-premium/public/app.js && node --check scripts/embed-resources.js && node --check scripts/refresh-scholarships.js",
+    "check": "node --check src/server.js && node --check src/ai.js && node --check src/profile.js && node --check src/admissions.js &&node --check public/profile.js && node --check public/password-policy.js &&node --check public/combobox.js && node --check src/universities.js && node --check src/browser.js && node --check src/db.js && node --check src/seed.js && node --check src/opportunities.js && node --check public/app.js && node --check pothik-premium/public/app.js && node --check scripts/embed-resources.js && node --check scripts/refresh-scholarships.js",
     "refresh:scholarships": "node scripts/refresh-scholarships.js",
     "setup:browser": "playwright install --only-shell chromium"
   },
