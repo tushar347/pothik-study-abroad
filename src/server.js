@@ -516,17 +516,41 @@ Then: what they already meet, the main gaps, and 2–3 concrete next steps (with
   });
 
   // ---------- Transcript / certificate reading (read in memory, then discarded) ----------
+  // Latest upload for each certificate card: what was read and when (no files).
+  app.get('/api/documents', requireAuth, (req, res) => {
+    const rows = db.prepare('SELECT slot,doc_type,values_json,uploaded_at FROM document_uploads WHERE user_id=? ORDER BY uploaded_at DESC, id DESC').all(req.session.user.id);
+    const slots = {};
+    for (const r of rows) {
+      // Uploads made outside a card are filed by their detected document type.
+      const slot = r.slot === 'other' ? admissions.slotFor(r.doc_type) : r.slot;
+      if (slots[slot]) continue;
+      let values = {}; try { values = JSON.parse(r.values_json); } catch { /* ignore */ }
+      slots[slot] = { docType: r.doc_type, values, uploadedAt: r.uploaded_at };
+    }
+    res.json({ slots });
+  });
   app.post('/api/documents/read', requireAuth, admissionsLimiter, (req, res) => documentUpload.single('document')(req, res, async err => {
     if (err) return res.status(400).json({ error: err.code === 'LIMIT_FILE_SIZE' ? 'The file must be under 10 MB.' : 'Upload failed. Try another file.' });
     const buffer = req.file?.buffer; const mime = documentMime(buffer);
     if (!mime) return res.status(400).json({ error: 'Upload a PDF, JPEG, PNG or WebP file.' });
+    const slot = admissions.DOCUMENT_SLOTS[req.query.slot] ? String(req.query.slot) : 'other';
     try {
-      const { document, suggestions } = await admissions.readTranscript({ mimeType: mime, buffer });
+      const { document, suggestions } = await admissions.readTranscript({ mimeType: mime, buffer, slot });
+      // The wrong certificate in a slot (e.g. an HSC sheet uploaded as SSC): say where it belongs instead.
+      if (slot !== 'other' && !admissions.DOCUMENT_SLOTS[slot].accepts.includes(document.document_type)) {
+        const belongs = admissions.slotFor(document.document_type);
+        const a = label => `${/^[AEIOU]/i.test(label) ? 'an' : 'a'} ${label}`;
+        const want = admissions.DOCUMENT_SLOTS[slot].label; const got = admissions.DOCUMENT_SLOTS[belongs]?.label;
+        return res.status(422).json({ error: belongs !== 'other' ? `This looks like ${a(got)}, not ${a(want)}. Upload it in the ${got} card instead.` : `This does not look like ${a(want)}. Check you chose the right file.`, belongsTo: belongs, detected: document.document_type });
+      }
       // Warn if the document seems to belong to someone else.
       const tokens = s => String(s).toLowerCase().split(/[^a-zঀ-৿]+/).filter(t => t.length > 2);
       const mine = new Set(tokens(req.session.user.name));
       const nameWarning = document.candidate_name && mine.size && !tokens(document.candidate_name).some(t => mine.has(t))
         ? `The name on this document ("${document.candidate_name}") does not match your account name. Only upload your own documents.` : '';
+      // Remember which certificate was uploaded and what was read, for its card. The file is not kept.
+      db.prepare('INSERT INTO document_uploads(user_id,slot,doc_type,values_json) VALUES(?,?,?,?)')
+        .run(req.session.user.id, slot === 'other' ? admissions.slotFor(document.document_type) : slot, document.document_type, JSON.stringify(suggestions));
       res.json({ document, suggestions, nameWarning, message: 'Document read. The file was not stored.' });
     } catch (e) {
       console.error('Document read failed:', e.message);

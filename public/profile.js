@@ -363,12 +363,15 @@
           </section>
           <section class="pf-view" id="pf-view-documents" role="tabpanel" aria-labelledby="pf-tab-documents" hidden>
             <div class="admin-box pf-card">
-              <div class="doc-privacy">${ICONS.lock}<p><b>Private by design.</b> Your file is read once by the AI to pick out your results, then discarded — Pothik never saves it. Nothing changes in your profile until you confirm. Do not upload your passport, NID or bank documents.</p></div>
-              <label class="doc-drop" id="docDrop">
-                <input type="file" id="docInput" accept="application/pdf,image/png,image/jpeg,image/webp">
-                ${ICONS.upload}<b>Choose a transcript or certificate</b><small>SSC / HSC / Dakhil / Alim certificates, O / A Level results, university transcripts, IELTS / TOEFL / PTE / Duolingo / GRE score reports · PDF, JPEG, PNG or WebP · up to 10 MB</small>
-              </label>
-              <div class="ch-progress" id="docProgress" hidden><span class="ch-spinner" aria-hidden="true"></span><div><b>Reading your document…</b><small>This usually takes 10–20 seconds.</small></div></div>
+              <div class="doc-privacy">${ICONS.lock}<p><b>Private by design.</b> Upload each certificate in its own card. The AI reads your results from it, then the file is discarded — Pothik never saves it. Nothing changes in your profile until you confirm. Do not upload your passport, NID or bank documents.</p></div>
+              <div class="doc-slots" id="docSlots"></div>
+              <details class="doc-other"><summary>Other documents — TOEFL, PTE, Duolingo, GMAT, Master's transcript</summary>
+                <label class="doc-drop" id="docDrop">
+                  <input type="file" id="docInput" accept="application/pdf,image/png,image/jpeg,image/webp">
+                  ${ICONS.upload}<b>Choose another certificate or score report</b><small>PDF, JPEG, PNG or WebP · up to 10 MB</small>
+                </label>
+              </details>
+              <div class="ch-progress" id="docProgress" hidden><span class="ch-spinner" aria-hidden="true"></span><div><b id="docProgressTitle">Reading your document…</b><small>This usually takes 10–20 seconds.</small></div></div>
               <div class="form-message" id="docMessage" role="status"></div>
               <div id="docResult"></div>
             </div>
@@ -406,7 +409,13 @@
     setupChanceDropdowns();
     $('#chanceList').addEventListener('click', onCheckAction);
     $('#chanceResult').addEventListener('click', onCheckAction);
-    $('#docInput').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; uploadDocument(f); });
+    $('#docInput').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; uploadDocument(f, 'other'); });
+    // Certificate cards: each has its own upload (click or drag a file onto the card).
+    const slotsEl = $('#docSlots');
+    slotsEl.addEventListener('change', e => { const input = e.target.closest('[data-slot-input]'); if (!input) return; const f = input.files[0]; input.value = ''; uploadDocument(f, input.dataset.slotInput); });
+    slotsEl.addEventListener('dragover', e => { const card = e.target.closest('[data-slot]'); if (card) { e.preventDefault(); card.classList.add('dragging'); } });
+    slotsEl.addEventListener('dragleave', e => e.target.closest('[data-slot]')?.classList.remove('dragging'));
+    slotsEl.addEventListener('drop', e => { const card = e.target.closest('[data-slot]'); if (!card) return; e.preventDefault(); card.classList.remove('dragging'); uploadDocument(e.dataTransfer.files[0], card.dataset.slot); });
     const drop = $('#docDrop');
     ['dragenter', 'dragover'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add('dragging'); }));
     ['dragleave', 'drop'].forEach(t => drop.addEventListener(t, () => drop.classList.remove('dragging')));
@@ -421,6 +430,7 @@
     $('#profilePanel .pf-savebar').hidden = !FORM_VIEWS.has(view.id);
     $('#profilePanel').scrollTop = 0;
     const panel = $(`#pf-view-${view.id}`);
+    if (view.id === 'documents') loadDocSlots();
     if (view.id === 'chances') {
       if (!checksLoaded) loadChecks();
       orderCountries();
@@ -480,24 +490,27 @@
     const p = profile; const facts = [];
     const band = v => (v === undefined ? '–' : Number(v).toFixed(1));
     const gpa = v => Number(v).toFixed(2);
-    if (/^ielts/.test(p.englishTest || '') && p.ieltsOverall !== undefined) facts.push(['IELTS', [`Overall ${band(p.ieltsOverall)}`, p.ieltsListening !== undefined ? `L ${band(p.ieltsListening)} · R ${band(p.ieltsReading)} · W ${band(p.ieltsWriting)} · S ${band(p.ieltsSpeaking)}` : ''].filter(Boolean).join(' · ')]);
-    if (p.englishTest === 'toefl-ibt' && p.toeflTotal !== undefined) facts.push(['TOEFL', p.toeflTotal]);
-    if (p.englishTest === 'pte-academic' && p.pteOverall !== undefined) facts.push(['PTE', p.pteOverall]);
-    if (p.englishTest === 'duolingo' && p.duolingoOverall !== undefined) facts.push(['Duolingo', p.duolingoOverall]);
-    if (p.graduateTest === 'gre' && p.greQuant) facts.push(['GRE', `V${p.greVerbal ?? '–'} Q${p.greQuant}`]);
-    if (p.graduateTest === 'gmat' && p.gmatTotal) facts.push(['GMAT', p.gmatTotal]);
+    if (/^ielts/.test(p.englishTest || '') && p.ieltsOverall !== undefined) facts.push(['IELTS', [`Overall ${band(p.ieltsOverall)}`, p.ieltsListening !== undefined ? `L ${band(p.ieltsListening)} · R ${band(p.ieltsReading)} · W ${band(p.ieltsWriting)} · S ${band(p.ieltsSpeaking)}` : ''].filter(Boolean).join(' · '), 'ieltsOverall']);
+    if (p.englishTest === 'toefl-ibt' && p.toeflTotal !== undefined) facts.push(['TOEFL', p.toeflTotal, 'toeflTotal']);
+    if (p.englishTest === 'pte-academic' && p.pteOverall !== undefined) facts.push(['PTE', p.pteOverall, 'pteOverall']);
+    if (p.englishTest === 'duolingo' && p.duolingoOverall !== undefined) facts.push(['Duolingo', p.duolingoOverall, 'duolingoOverall']);
+    if (p.graduateTest === 'gre' && p.greQuant) facts.push(['GRE', `V${p.greVerbal ?? '–'} Q${p.greQuant}`, 'greQuant']);
+    if (p.graduateTest === 'gmat' && p.gmatTotal) facts.push(['GMAT', p.gmatTotal, 'gmatTotal']);
     if (p.graduateTest === 'gre' && p.greQuant) facts[facts.length - 1][1] += ` · AWA ${p.greWriting ?? '–'}`;
     // SSC and HSC are separate certificates (Dakhil/Alim for Madrasah; Diploma for polytechnic students).
     const secondaryName = p.secondarySystem === 'madrasah' ? 'Dakhil' : 'SSC';
     const higherName = p.secondarySystem === 'madrasah' ? 'Alim' : p.secondarySystem === 'polytechnic' ? 'Diploma' : 'HSC';
-    if (p.sscGpa !== undefined) facts.push([secondaryName, `GPA ${gpa(p.sscGpa)} out of 5${p.sscYear ? ` (${p.sscYear})` : ''}`]);
-    if (p.hscGpa !== undefined) facts.push([higherName, `GPA ${gpa(p.hscGpa)} out of 5${p.hscYear ? ` (${p.hscYear})` : ''}`]);
-    if (p.oLevelResult) facts.push(['O Level', p.oLevelResult]);
-    if (p.aLevelResult) facts.push(['A Level', p.aLevelResult]);
+    if (p.sscGpa !== undefined) facts.push([secondaryName, `GPA ${gpa(p.sscGpa)} out of 5${p.sscYear ? ` (${p.sscYear})` : ''}`, 'sscGpa']);
+    if (p.hscGpa !== undefined) facts.push([higherName, `GPA ${gpa(p.hscGpa)} out of 5${p.hscYear ? ` (${p.hscYear})` : ''}`, 'hscGpa']);
+    if (p.oLevelResult) facts.push(['O Level', p.oLevelResult, 'oLevelResult']);
+    if (p.aLevelResult) facts.push(['A Level', p.aLevelResult, 'aLevelResult']);
     const cgpa = (v, scale, year) => `${scale === '100' ? `${v}%` : `CGPA ${gpa(v)}${scale ? ` out of ${Number(scale).toFixed(scale === '10' ? 0 : 2)}` : ''}`}${year ? ` (${year})` : ''}`;
-    if (p.bachelorCgpa !== undefined) facts.push(["Bachelor's", cgpa(p.bachelorCgpa, p.bachelorScale, p.bachelorYear)]);
-    if (p.masterCgpa !== undefined) facts.push(["Master's", cgpa(p.masterCgpa, p.masterScale, p.masterYear)]);
-    $('#profileFacts').innerHTML = facts.length ? `<h4>Scores at a glance</h4>${facts.map(([k, v]) => `<div><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('')}` : '<h4>Scores at a glance</h4><div><span>Tip</span><b>Add your results and test scores below.</b></div>';
+    if (p.bachelorCgpa !== undefined) facts.push(["Bachelor's", cgpa(p.bachelorCgpa, p.bachelorScale, p.bachelorYear), 'bachelorCgpa']);
+    if (p.masterCgpa !== undefined) facts.push(["Master's", cgpa(p.masterCgpa, p.masterScale, p.masterYear), 'masterCgpa']);
+    $('#profileFacts').innerHTML = facts.length
+      ? `<h4>Scores at a glance</h4>${facts.map(([k, v]) => `<div><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('')}<p class="pf-verify-note">Upload your certificates in <button type="button" class="text-link" data-goto="documents">Upload documents</button> to fill these in automatically.</p>`
+      : '<h4>Scores at a glance</h4><div><span>Tip</span><b>Add your results and test scores below.</b></div>';
+    $('#profileFacts').querySelector('[data-goto]')?.addEventListener('click', () => showView('documents'));
   }
   // view: which profile page to show — overview (default), account, goals, academic, tests, personal or security.
   async function openProfile(view = 'overview') {
@@ -802,14 +815,55 @@
     const f = FIELDS[k]; if (f?.type === 'select') return optionList(f).find(([o]) => o === String(v))?.[1] || String(v);
     return Array.isArray(v) ? v.join(', ') : String(v);
   };
-  async function uploadDocument(file) {
+  // ---------- One card per certificate ----------
+  const DOC_SLOTS = [
+    { id: 'ssc', title: 'SSC', sub: 'Secondary School Certificate · Dakhil · O Level', what: 'Board certificate, marksheet or academic transcript', icon: 'book',
+      reads: 'GPA and passing year' },
+    { id: 'hsc', title: 'HSC', sub: 'Higher Secondary Certificate · Alim · Diploma · A Level', what: 'Board certificate, marksheet or academic transcript', icon: 'book',
+      reads: 'GPA and passing year' },
+    { id: 'bachelor', title: "Bachelor's degree", sub: 'Degree certificate or academic transcript', what: 'Final transcript or degree certificate', icon: 'cap',
+      reads: 'CGPA, grading scale, university and graduation year' },
+    { id: 'ielts', title: 'IELTS', sub: 'Test Report Form (TRF)', what: 'The TRF PDF from the test centre, or a clear scan', icon: 'chart',
+      reads: 'Overall band, section bands, module and test date' },
+    { id: 'gre', title: 'GRE', sub: 'GRE General Test score report', what: 'The official score report PDF from your ETS account', icon: 'target',
+      reads: 'Verbal, Quantitative and Analytical Writing scores' }
+  ];
+  const SLOT_SUMMARY = {
+    ssc: v => [v.sscGpa !== undefined && `GPA ${Number(v.sscGpa).toFixed(2)}`, v.sscYear, v.oLevelResult].filter(Boolean).join(' · '),
+    hsc: v => [v.hscGpa !== undefined && `GPA ${Number(v.hscGpa).toFixed(2)}`, v.hscYear, v.aLevelResult].filter(Boolean).join(' · '),
+    bachelor: v => [v.bachelorCgpa !== undefined && `CGPA ${v.bachelorCgpa}${v.bachelorScale ? ` / ${v.bachelorScale}` : ''}`, v.bachelorInstitution, v.bachelorYear].filter(Boolean).join(' · '),
+    ielts: v => [v.ieltsOverall !== undefined && `Overall ${Number(v.ieltsOverall).toFixed(1)}`, v.englishTest === 'ielts-general' ? 'General Training' : v.englishTest ? 'Academic' : '', v.englishTestDate].filter(Boolean).join(' · '),
+    gre: v => [v.greVerbal && `V ${v.greVerbal}`, v.greQuant && `Q ${v.greQuant}`, v.greWriting !== undefined && `AWA ${v.greWriting}`].filter(Boolean).join(' · ')
+  };
+  let docSlots = {};
+  async function loadDocSlots() {
+    try { docSlots = (await api('/api/documents')).slots || {}; } catch { docSlots = {}; }
+    renderDocSlots();
+  }
+  function renderDocSlots() {
+    $('#docSlots').innerHTML = DOC_SLOTS.map(s => {
+      const r = docSlots[s.id]; const tone = r ? 'ok' : 'none';
+      const summary = r ? SLOT_SUMMARY[s.id]?.(r.values || {}) : '';
+      return `<article class="doc-slot doc-slot-${tone}" data-slot="${s.id}">
+        <header><span class="doc-slot-icon">${ICONS[s.icon]}</span><div><h4>${esc(s.title)}</h4><small>${esc(s.sub)}</small></div><span class="doc-slot-status">${r ? ICONS.check : ''}${r ? 'Uploaded' : 'Not uploaded'}</span></header>
+        ${r ? `<p class="doc-slot-values">${esc(summary || 'Results read')}</p><p class="doc-slot-meta">Uploaded ${esc(formatDate(r.uploadedAt))}</p>`
+          : `<p class="doc-slot-what">${esc(s.what)}</p><p class="doc-slot-meta">We read: ${esc(s.reads)}</p>`}
+        <div class="doc-slot-actions">
+          <label class="button ${r ? 'pf-back' : 'button-primary'} doc-slot-upload"><input type="file" accept="application/pdf,image/png,image/jpeg,image/webp" data-slot-input="${s.id}">${ICONS.upload}<span>${r ? 'Replace' : 'Upload'}</span></label>
+        </div>
+      </article>`;
+    }).join('');
+  }
+  async function uploadDocument(file, slot = 'other') {
     if (!file) return;
     $('#docMessage').textContent = ''; $('#docResult').innerHTML = '';
     if (!['application/pdf', 'image/png', 'image/jpeg', 'image/webp'].includes(file.type)) { $('#docMessage').textContent = 'Upload a PDF, JPEG, PNG or WebP file.'; return; }
     if (file.size > 10 * 1024 * 1024) { $('#docMessage').textContent = 'The file must be under 10 MB.'; return; }
     const fd = new FormData(); fd.append('document', file);
-    $('#docProgress').hidden = false;
-    try { renderDocResult(await api('/api/documents/read', { method: 'POST', body: fd })); }
+    const title = DOC_SLOTS.find(s => s.id === slot)?.title;
+    $('#docProgressTitle').textContent = title ? `Reading your ${title} document…` : 'Reading your document…';
+    $('#docProgress').hidden = false; $('#docProgress').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    try { renderDocResult(await api(`/api/documents/read?slot=${encodeURIComponent(slot)}`, { method: 'POST', body: fd }), slot); loadDocSlots(); }
     catch (err) { $('#docMessage').textContent = err.message; }
     finally { $('#docProgress').hidden = true; }
   }
@@ -831,7 +885,7 @@
       await api('/api/profile', { method: 'PUT', body: JSON.stringify({ name: state.user.name, preferred_language: state.user.preferred_language || 'en', profile: { ...lastProfile, ...chosen } }) });
       await openProfile('documents');
       $('#docResult').innerHTML = ''; $('#docMessage').textContent = `Added ${Object.keys(chosen).length} result${Object.keys(chosen).length === 1 ? '' : 's'} to your profile. Your admission estimates update automatically.`;
-      checksLoaded = false; toast('Profile updated from your document.');
+      checksLoaded = false; loadDocSlots(); toast('Profile updated from your document.');
     } catch (err) { $('#docMessage').textContent = err.message; }
   }
 

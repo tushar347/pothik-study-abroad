@@ -85,6 +85,15 @@ async function createDatabase(databasePath = process.env.DATABASE_PATH) {
       programs_json TEXT NOT NULL DEFAULT '[]', sources_json TEXT NOT NULL DEFAULT '[]', mode TEXT NOT NULL DEFAULT '',
       fetched_at INTEGER NOT NULL, last_requested_at INTEGER NOT NULL
     );
+    -- Which certificate a student uploaded and what was read from it. The file itself is never stored.
+    CREATE TABLE IF NOT EXISTS document_uploads (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      slot TEXT NOT NULL, doc_type TEXT NOT NULL,
+      values_json TEXT NOT NULL DEFAULT '{}',
+      uploaded_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_document_uploads_user ON document_uploads(user_id, uploaded_at);
     CREATE TABLE IF NOT EXISTS admission_checks (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -200,6 +209,12 @@ async function createDatabase(databasePath = process.env.DATABASE_PATH) {
   `);
   // Safe migration for databases created by an earlier version.
   try { raw.run('ALTER TABLE users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 0'); } catch (e) { if (!String(e.message).includes('duplicate column name')) throw e; }
+  // Document verification was removed: keep the upload records, drop the old check reports.
+  if (raw.exec("SELECT 1 FROM sqlite_master WHERE type='table' AND name='document_verifications'").length) {
+    const hasSlot = raw.exec("SELECT 1 FROM pragma_table_info('document_verifications') WHERE name='slot'").length;
+    raw.run(`INSERT INTO document_uploads(user_id,slot,doc_type,values_json,uploaded_at) SELECT user_id,${hasSlot ? 'slot' : "'other'"},doc_type,values_json,checked_at FROM document_verifications`);
+    raw.run('DROP TABLE document_verifications');
+  }
   try { raw.run("ALTER TABLE university_catalogs ADD COLUMN domain TEXT NOT NULL DEFAULT ''"); } catch (e) { if (!String(e.message).includes('duplicate column name')) throw e; }
   try { raw.run('ALTER TABLE users ADD COLUMN avatar_path TEXT'); } catch (e) { if (!String(e.message).includes('duplicate column name')) throw e; }
   try { raw.run('ALTER TABLE resources ADD COLUMN embedding_json TEXT'); } catch (e) { if (!String(e.message).includes('duplicate column name')) throw e; }

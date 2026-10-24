@@ -274,6 +274,39 @@ img.flag-img{width:1.4em!important;height:1.05em!important;max-width:none!import
 .ch-steps li::before{content:counter(step);width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:#fff;border:1px solid var(--line);font-size:11px}
 .ch-steps li.is-done{color:#2f6b3a;background:#e7f2e4}
 .ch-steps li.is-done::before{content:'✓';background:#2f6b3a;border-color:#2f6b3a;color:#fff}
+/* Certificate cards (one per document type) */
+.doc-slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:16px}
+.doc-slot{display:flex;flex-direction:column;gap:8px;padding:16px;border:1px solid var(--line);border-radius:14px;background:#fffdf9;transition:border-color .15s,box-shadow .15s}
+.doc-slot.dragging{border-color:var(--burgundy);box-shadow:0 0 0 3px rgba(112,38,61,.15)}
+.doc-slot header{display:flex;align-items:flex-start;gap:10px}
+.doc-slot header>div{flex:1;min-width:0}
+.doc-slot h4{margin:0;font-size:17px;color:var(--burgundy-deep)}
+.doc-slot header small{display:block;font-size:11px;color:var(--muted);line-height:1.45;margin-top:2px}
+.doc-slot-icon{width:34px;height:34px;flex:0 0 34px;border-radius:10px;display:grid;place-items:center;background:var(--blush);color:var(--burgundy)}
+.doc-slot-icon svg{width:18px;height:18px}
+.doc-slot-status{display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;font-size:11px;font-weight:800;padding:4px 9px;border-radius:999px;background:var(--cream);color:var(--muted);white-space:nowrap}
+.doc-slot-status svg{width:12px;height:12px}
+.doc-slot-ok .doc-slot-status{background:#e7f2e4;color:#245a2f}.doc-slot-info .doc-slot-status{background:#e8eef8;color:#28406b}
+.doc-slot-bad .doc-slot-status{background:#fbeaea;color:#8f1f1a}.doc-slot-bad{border-color:#efc4c4}
+.doc-slot-ok{border-color:#b9d7b3}
+.doc-slot-values{margin:0;font-size:14px;font-weight:700;color:var(--ink)}
+.doc-slot-what{margin:0;font-size:13px;color:var(--ink)}
+.doc-slot-meta{margin:0;font-size:11px;color:var(--muted);line-height:1.5}
+.doc-slot-actions{display:flex;align-items:center;gap:12px;margin-top:auto;padding-top:4px}
+.doc-slot-upload{position:relative;margin:0;gap:6px;min-height:38px;padding:7px 14px;font-size:13px;cursor:pointer}
+/* The upload button is a <label>: undo the site's generic label styles (column layout, small grey text). */
+.doc-slot .doc-slot-upload{display:inline-flex!important;flex-direction:row!important;align-items:center;letter-spacing:normal;text-transform:none;font-weight:700;margin:0!important}
+.doc-slot .doc-slot-upload.button-primary,.doc-slot .doc-slot-upload.button-primary span{color:#fffaf6!important}
+.doc-slot .doc-slot-upload.pf-back,.doc-slot .doc-slot-upload.pf-back span{color:var(--burgundy)!important}
+.doc-slot .doc-slot-upload span{font-size:13px;font-weight:700}
+.doc-slot-upload svg{width:16px;height:16px}
+.doc-slot-upload input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.doc-slot-upload:focus-within{outline:3px solid rgba(112,38,61,.35);outline-offset:2px}
+.doc-slot-actions .text-link{font-size:13px;padding:4px 0}
+.doc-other{margin:0 0 14px;border:1px solid var(--line);border-radius:12px;padding:10px 14px;background:#fffdf9}
+.doc-other summary{cursor:pointer;font-size:13px;font-weight:700;color:var(--burgundy)}
+.doc-other .doc-drop{margin-top:12px}
+.pf-verify-note{margin:6px 0 0;font-size:11px;color:var(--muted)}.pf-verify-note .text-link{font-size:11px;padding:0}
 /* Admission chances and document reading */
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 #pf-view-chances,#pf-view-documents{display:flex;flex-direction:column;gap:18px}

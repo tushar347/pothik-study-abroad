@@ -240,6 +240,17 @@ test('programme lists are built from official listing links, ignoring navigation
   assert.equal(degreeOf('Some Programme', 'some-programme-master-of-science-msc', ''), 'master');
 });
 
+test('uploaded documents are filed under the matching certificate card', () => {
+  const { slotFor, DOCUMENT_SLOTS } = require('../src/admissions');
+  assert.equal(slotFor('dakhil'), 'ssc');
+  assert.equal(slotFor('a_level'), 'hsc');
+  assert.equal(slotFor('bachelor_transcript'), 'bachelor');
+  assert.equal(slotFor('ielts'), 'ielts');
+  assert.equal(slotFor('gre'), 'gre');
+  assert.equal(slotFor('toefl'), 'other');
+  assert.deepEqual(Object.keys(DOCUMENT_SLOTS), ['ssc', 'hsc', 'bachelor', 'ielts', 'gre', 'other']);
+});
+
 test('database initialization refuses duplicate legacy rows without rewriting the file', async t => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'pothik-migration-test-'));
   const databasePath = path.join(directory, 'pothik.sqlite');
